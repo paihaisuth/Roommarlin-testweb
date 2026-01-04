@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>รายการบิลทั้งหมด (Minimal View)</title>
+    
+    <!-- Google Fonts: Kanit -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS (CDN - Stable version) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { 
+            font-family: 'Kanit', sans-serif; 
+            background-color: #f3f4f6; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+        
+        /* Ensure top spacing for Full View */
+        #view-contract-detail {
+            padding-top: 20px; /* Standard top padding for status bar/UX */
+        }
+        
+        /* Modal Styles */
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            transition: opacity 0.3s ease;
+        }
+        .modal-content {
+             transform: translateY(0%);
+             transition: transform 0.3s ease-out;
+        }
+        .modal-content.hidden-modal {
+             transform: translateY(100%);
+        }
+        
+        /* Custom File Upload Button Style */
+        .custom-file-upload {
+            border: 1px solid #ccc;
+            display: inline-block;
+            padding: 6px 12px;
+            cursor: pointer;
+            border-radius: 0.375rem;
+            background-color: #f3f4f6;
+            transition: all 0.2s;
+        }
+        .custom-file-upload:hover {
+            background-color: #e5e7eb;
+        }
+    </style>
+</head>
+<body class="min-h-screen relative"> 
+
+    <!-- ========================================================= -->
+    <!-- VIEW: ACTIVE CONTRACT DETAIL (รายการบิลทั้งหมด) -->
+    <!-- ========================================================= -->
+    <div id="view-contract-detail" class="h-screen overflow-y-auto pb-24 bg-f3f4f6">
+        
+        <!-- *** TOP HEADER *** -->
+        <div class="w-full px-4 mb-6">
+            <div class="bg-white p-4 rounded-xl shadow-lg"> 
+                 <h1 class="text-2xl font-extrabold text-gray-800 flex items-center gap-2">
+                     <i class="fa-solid fa-file-invoice-dollar text-blue-500"></i> รายการบิลค่าเช่า
+                </h1>
+                
+                <!-- NEW: Room Info and Refund Button in one line -->
+                <div class="flex justify-between items-center mt-1 mb-3">
+                    <p class="text-sm text-gray-600">ห้อง <span id="detailRoomNumberTitle" class="font-bold text-gray-800">101 - สมศรี มีโชค</span></p>
+                    
+                    <!-- Refund Button (Moved here) -->
+                    <button id="refundButton" onclick="openRefundSlipModal();" class="px-2 py-1 text-xs font-semibold text-white bg-red-500 rounded-full hover:bg-red-600 transition shadow-md flex items-center active:scale-95">
+                         <i class="fa-solid fa-arrow-rotate-left mr-1"></i> คืนค่าประกัน
+                    </button>
+                </div>
+                
+                <!-- CONTRACT INFO & DEPOSIT -->
+                <div id="contract-info-card" class="grid grid-cols-2 gap-y-1 text-xs sm:text-sm pt-3 border-t border-gray-200">
+                    
+                    <!-- Row 1: Contract Dates -->
+                    <span class="flex items-center text-gray-600">
+                        <i class="fa-solid fa-play-circle mr-1 text-green-500"></i>
+                        เริ่ม: <span id="contractStartDate" class="font-bold text-gray-800 ml-1">--</span>
+                    </span>
+                    <span class="flex items-center text-gray-600">
+                        <i class="fa-solid fa-stop-circle mr-1 text-red-500"></i>
+                        สิ้นสุด: <span id="contractEndDate" class="font-bold text-gray-800 ml-1">--</span>
+                    </span>
+                    
+                    <!-- Row 2: Billing Day & Deposit Info -->
+                    <span class="flex items-center text-gray-600">
+                        <i class="fa-solid fa-calendar-day mr-1 text-purple-500"></i>
+                        ครบกำหนดชำระทุกวันที่: <span id="billDueDay" class="font-bold text-purple-700 ml-1">--</span>
+                    </span>
+                    <span id="depositSummary" class="flex items-center text-gray-600 cursor-pointer hover:text-gray-800 transition" onclick="openDepositModal();">
+                        <i class="fa-solid fa-hand-holding-dollar mr-1 text-yellow-600"></i>
+                        ประกัน: <span id="depositAmount" class="font-bold ml-1">--</span>
+                        <i id="depositStatusIcon" class="fa-solid fa-circle-check text-green-600 ml-1"></i>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <main class="px-4 space-y-4 pb-20">
+            
+            <!-- [--- FEATURED BILL CARD ---] -->
+            <h3 class="text-lg font-bold text-gray-700 mb-3 flex items-center gap-2 pt-1">
+                <i class="fa-solid fa-bolt text-yellow-500"></i> บิลปัจจุบันที่ต้องชำระ
+            </h3>
+            <div id="featured-bill-container">
+                 <!-- Featured Bill Card will be generated by JS -->
+            </div>
+            
+            <!-- List Title -->
+            <h3 class="text-lg font-bold text-gray-700 mb-3 flex items-center gap-2 border-t pt-3">
+                <i class="fa-solid fa-list-ul text-gray-500"></i> รายการบิลทั้งหมด (ล่วงหน้า/ย้อนหลัง)
+            </h3>
+            
+            <!-- Tab Content: BILLS LIST -->
+            <div id="bill-list-container" class="space-y-3">
+                <!-- Bill Items will be generated by JS -->
+                <p class="text-center text-gray-500 mt-8" id="no-bills-message">
+                    <i class="fa-solid fa-file-invoice-slash mr-1"></i> ไม่พบบิลที่ถูกสร้าง
+                </p>
+            </div>
+
+        </main>
+        
+        <!-- FAB Buttons (ซ่อน) -->
+        <div class="fixed bottom-24 right-5 z-30 flex flex-col gap-3 items-end hidden">
+            <button onclick="openManageBillModal();" class="w-16 h-16 bg-green-600 text-white rounded-full shadow-xl shadow-green-500/30 flex items-center justify-center transition active:scale-90 hover:bg-green-700">
+                <i class="fa-solid fa-plus text-2xl"></i>
+            </button>
+        </div>
+        
+        <!-- Global Bottom Navigation -->
+        <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 z-40 pb-safe shadow-[0_-4px_10px_rgba(0,0,0,0.02)]">
+            <div class="grid grid-cols-3 h-16">
+                <a href="#" class="flex flex-col items-center justify-center text-gray-400 hover:text-blue-600 transition active:scale-95 group">
+                    <i class="fa-solid fa-chart-pie text-xl mb-1 group-hover:scale-110 transition"></i>
+                    <span class="text-[10px] font-medium">รายงานผล</span>
+                </a>
+                <a href="#" class="flex flex-col items-center justify-center text-blue-600 relative">
+                    <i class="fa-solid fa-house text-xl mb-1 mt-1"></i>
+                    <span class="text-[10px] font-bold">หน้าหลัก</span>
+                </a>
+                <a href="#" class="flex flex-col items-center justify-center text-gray-400 hover:text-blue-600 transition active:scale-95 group">
+                    <i class="fa-solid fa-user-circle text-xl mb-1 group-hover:scale-110 transition"></i>
+                    <span class="text-[10px] font-medium">โปรไฟล์</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- MODAL: ACTION SHEET (ตัวเลือก) -->
+    <!-- ========================================================= -->
+    <div id="actionSheetModal" class="fixed inset-0 z-50 flex items-end justify-center hidden">
+        <div class="modal-overlay absolute inset-0" onclick="closeActionSheetModal();"></div>
+        <div class="modal-content hidden-modal bg-white w-full max-w-lg rounded-t-xl shadow-2xl relative p-4 pb-safe">
+            <h3 id="actionSheetTitle" class="text-lg font-bold text-gray-800 mb-4 text-center">ตัวเลือกบิล: ธ.ค. 2565</h3>
+            <div class="space-y-3">
+                <button id="actionSheetPaymentBtn" onclick="selectAction('payment');" class="w-full flex items-center justify-center py-3 text-lg font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition shadow-md">
+                    <i class="fa-solid fa-money-check-dollar mr-2"></i> แจ้งชำระเงิน
+                </button>
+                <button id="actionSheetManageBtn" onclick="selectAction('manage');" class="w-full flex items-center justify-center py-3 text-lg font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition shadow-md">
+                    <i class="fa-solid fa-edit mr-2"></i> แก้ไข/บันทึกหน่วยน้ำไฟ
+                </button>
+                <button onclick="closeActionSheetModal();" class="w-full py-3 text-sm font-medium text-gray-500 rounded-lg hover:text-gray-700 transition mt-2">
+                    ยกเลิก
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ========================================================= -->
+    <!-- MODAL: MANAGE BILL (สร้าง/แก้ไขบิล) -->
+    <!-- ========================================================= -->
+    <div id="manageBillModal" class="fixed inset-0 z-50 flex items-end justify-center hidden">
+        <div class="modal-overlay absolute inset-0" onclick="closeManageBillModal();"></div>
+        <div class="modal-content hidden-modal bg-white w-full max-w-lg rounded-t-xl shadow-2xl relative p-6 pb-safe">
+            <h2 id="manageBillTitle" class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fa-solid fa-receipt mr-2 text-green-600"></i> สร้างบิลใหม่
+            </h2>
+            <form id="manageBillForm" class="space-y-4">
+                <input type="hidden" id="billIdInput">
+                 <!-- Dropdown Selects -->
+                 <div class="flex space-x-2">
+                    <div class="w-1/2">
+                        <label class="block text-sm font-medium text-gray-700">บิลเรียกเก็บเดือน/ปี</label>
+                        <select id="billMonthYearSelect" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" required></select>
+                    </div>
+                     <div class="w-1/2">
+                        <label class="block text-sm font-medium text-gray-700">น้ำ/ไฟของเดือน/ปี</label>
+                        <select id="utilityMonthYearSelect" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" required></select>
+                    </div>
+                </div>
+                <!-- ค่าเช่า -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">ค่าเช่า</label>
+                    <input id="rentInput" type="number" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" required>
+                </div>
+                
+                <h3 class="text-base font-bold text-gray-700 pt-2 border-t">ค่าน้ำ/ค่าไฟ</h3>
+                <!-- Input หน่วย -->
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">หน่วยน้ำที่ใช้ (หน่วย)</label>
+                        <input id="waterUnitInput" type="number" step="1" oninput="calculateUtilityCost();" placeholder="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                        <small class="text-xs text-gray-500">อัตรา: <span id="waterRateDisplay">--</span> บ./หน่วย</small>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">หน่วยไฟที่ใช้ (หน่วย)</label>
+                        <input id="electricUnitInput" type="number" step="1" oninput="calculateUtilityCost();" placeholder="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                        <small class="text-xs text-gray-500">อัตรา: <span id="electricRateDisplay">--</span> บ./หน่วย</small>
+                    </div>
+                </div>
+                <!-- คำนวณค่าใช้จ่าย -->
+                <div class="flex space-x-2">
+                    <div class="w-1/2">
+                        <label class="block text-sm font-medium text-gray-700">ค่าน้ำ (คำนวณ)</label>
+                        <input id="waterInput" type="number" step="0.01" readonly class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border bg-gray-100">
+                    </div>
+                    <div class="w-1/2">
+                        <label class="block text-sm font-medium text-gray-700">ค่าไฟ (คำนวณ)</label>
+                        <input id="electricInput" type="number" step="0.01" readonly class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border bg-gray-100">
+                    </div>
+                </div>
+
+                <!-- NEW: แนบภาพมิเตอร์ (แยก 2 ช่อง พร้อม Preview) -->
+                <div class="border-t pt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">แนบภาพมิเตอร์ (จำเป็นสำหรับการบันทึกหน่วย)</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <!-- น้ำ -->
+                        <div>
+                            <label for="waterMeterImageInput" class="custom-file-upload w-full flex flex-col items-center justify-center text-sky-600 bg-sky-50 border-sky-300 h-20">
+                                <i class="fa-solid fa-camera text-xl"></i>
+                                <span class="text-xs">มิเตอร์น้ำ</span> 
+                                <span id="waterMeterFileName" class="text-gray-500 text-xs truncate w-full text-center"></span>
+                            </label>
+                            <input id="waterMeterImageInput" type="file" accept="image/*" class="hidden" onchange="previewImage(this, 'waterMeterPreview');" required>
+                             <img id="waterMeterPreview" class="mt-2 w-full max-h-32 object-cover rounded-md shadow-md hidden" src="" alt="มิเตอร์น้ำ">
+                        </div>
+                        <!-- ไฟ -->
+                        <div>
+                            <label for="electricMeterImageInput" class="custom-file-upload w-full flex flex-col items-center justify-center text-orange-600 bg-orange-50 border-orange-300 h-20">
+                                <i class="fa-solid fa-camera text-xl"></i> 
+                                <span class="text-xs">มิเตอร์ไฟ</span>
+                                <span id="electricMeterFileName" class="text-gray-500 text-xs truncate w-full text-center"></span>
+                            </label>
+                            <input id="electricMeterImageInput" type="file" accept="image/*" class="hidden" onchange="previewImage(this, 'electricMeterPreview');" required>
+                            <img id="electricMeterPreview" class="mt-2 w-full max-h-32 object-cover rounded-md shadow-md hidden" src="" alt="มิเตอร์ไฟ">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end pt-4 space-x-3">
+                    <button type="button" onclick="closeManageBillModal();" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition">
+                        ปิด
+                    </button>
+                    <button id="manageBillSaveBtn" type="submit" class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition">
+                        <i class="fa-solid fa-save mr-1"></i> บันทึกบิล
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- MODAL: PAYMENT (ชำระเงิน) -->
+    <!-- ========================================================= -->
+    <div id="paymentModal" class="fixed inset-0 z-50 flex items-end justify-center hidden">
+        <div class="modal-overlay absolute inset-0" onclick="closePaymentModal();"></div>
+        <div class="modal-content hidden-modal bg-white w-full max-w-lg rounded-t-xl shadow-2xl relative p-6 pb-safe">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fa-solid fa-credit-card mr-2 text-blue-600"></i> แจ้งชำระเงิน
+            </h2>
+            <div id="paymentDetailContent" class="space-y-4">
+                 <!-- Bill details loaded here by JS -->
+            </div>
+            
+            <div class="border-t pt-4 mt-4">
+                <h3 class="text-lg font-bold text-gray-700 mb-2">อัปโหลดหลักฐานการชำระ</h3>
+                
+                <!-- NEW: Custom File Upload for Slip with Preview -->
+                <div class="mb-4">
+                    <label for="slipUploadInput" class="custom-file-upload w-full flex flex-col items-center justify-center text-blue-700 bg-blue-50 border-blue-300 h-20">
+                        <i class="fa-solid fa-receipt text-xl"></i>
+                        <span class="text-xs">เลือกไฟล์สลิป (รูปภาพ/PDF)</span>
+                        <span id="slipFileName" class="text-gray-500 text-xs truncate w-full text-center"></span>
+                    </label>
+                    <input id="slipUploadInput" type="file" accept="image/*,.pdf" class="hidden" onchange="previewImage(this, 'slipPreview');">
+                    <small id="slipStatusText" class="text-xs text-red-500 block mt-1">กรุณาแนบไฟล์</small>
+                    
+                    <img id="slipPreview" class="mt-2 w-full max-h-40 object-contain rounded-md shadow-md hidden" src="" alt="สลิปชำระเงิน">
+                </div>
+                <!-- END NEW UPLOAD -->
+
+                <div class="flex justify-between items-center mt-4">
+                    <p class="text-sm text-gray-600">สถานะ: <span id="paymentStatus" class="font-bold"></span></p>
+                    <div class="flex space-x-3">
+                         <button type="button" onclick="closePaymentModal();" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition">
+                            ปิด
+                        </button>
+                        <button id="confirmPaymentButton" onclick="submitPayment();" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition" disabled>
+                            <i class="fa-solid fa-upload mr-1"></i> ยืนยันการชำระ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- MODAL: DEPOSIT (รายละเอียดค่าประกัน/คืนเงิน) -->
+    <!-- ========================================================= -->
+    <div id="depositModal" class="fixed inset-0 z-50 flex items-end justify-center hidden">
+        <div class="modal-overlay absolute inset-0" onclick="closeDepositModal();"></div>
+        <div class="modal-content hidden-modal bg-white w-full max-w-lg rounded-t-xl shadow-2xl relative p-6 pb-safe">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fa-solid fa-vault mr-2 text-yellow-600"></i> จัดการคืนค่าประกัน
+            </h2>
+            <div id="depositDetailContent" class="space-y-4">
+                 <p class="text-base font-bold text-gray-800">รายละเอียดเงินประกัน</p>
+                 <div class="space-y-2 text-sm">
+                     <p class="flex justify-between"><span>จำนวนเงินประกัน:</span><span class="font-bold text-xl text-yellow-600">${formatCurrency(contractDetailData[1].deposit.amount)} บ.</span></p>
+                     <p class="flex justify-between"><span>วันที่ชำระ:</span><span class="font-medium">${toThaiDate(contractDetailData[1].deposit.paidDate)}</span></p>
+                     <p class="flex justify-between border-t pt-2"><span>สถานะการรับเงิน:</span><span class="text-green-600 font-bold">${contractDetailData[1].deposit.status}</span></p>
+                 </div>
+            </div>
+            
+            <div class="border-t pt-4 mt-4">
+                <h3 class="text-lg font-bold text-gray-700 mb-2">บันทึกสลิปคืนเงิน (สำหรับ Admin)</h3>
+                <div id="refundSlipSection">
+                    <!-- Refund slip UI/Preview loaded here by JS -->
+                </div>
+                
+                <div class="flex justify-end pt-4">
+                    <button type="button" onclick="closeDepositModal();" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition">
+                        ปิด
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // =========================================================
+        // *** MOCK DATA ***
+        // =========================================================
+        const contractDetailData = {
+            1: {
+                tenant: 'สมศรี มีโชค',
+                room: '101',
+                rent: 3500, 
+                start: '2022-08-15', 
+                end: '2026-08-01',   
+                dueDay: 7, 
+                WaterRate: 15.00,       // ค่าน้ำต่อหน่วย
+                ElectricRate: 7.00,     // ค่าไฟต่อหน่วย
+                deposit: { 
+                    id: 0, 
+                    amount: 7000.00,
+                    paidDate: '2022-08-15',
+                    status: 'ชำระแล้ว',
+                    refundStatus: 'ยังไม่คืนเงิน', // สถานะคืนเงิน
+                    refundDate: null, 
+                    refundSlipUrl: null, // สลิปคืนเงิน
+                },
+                bills: [ 
+                    // บิลล่วงหน้า (ค่าใช้จ่ายเป็น 0)
+                    { id: 119, billMonth: 'ม.ค.', billYear: 2567, dueDate: '2024-01-07', utilityMonth: 'ธ.ค.', utilityYear: 2566, total: 3500, rent: 3500, water: 0, electric: 0, waterUnit: 0, electricUnit: 0, status: 'ยังไม่ถึงกำหนด', paidDate: null, slipUrl: null },
+                    { id: 118, billMonth: 'ธ.ค.', billYear: 2566, dueDate: '2023-12-07', utilityMonth: 'พ.ย.', utilityYear: 2566, total: 3500, rent: 3500, water: 0, electric: 0, waterUnit: 0, electricUnit: 0, status: 'ยังไม่ถึงกำหนด', paidDate: null, slipUrl: null },
+                    { id: 117, billMonth: 'พ.ย.', billYear: 2566, dueDate: '2023-11-07', utilityMonth: 'ต.ค.', utilityYear: 2566, total: 3500, rent: 3500, water: 0, electric: 0, waterUnit: 0, electricUnit: 0, status: 'ยังไม่ถึงกำหนด', paidDate: null, slipUrl: null },
+                    { id: 116, billMonth: 'ต.ค.', billYear: 2566, dueDate: '2023-10-07', utilityMonth: 'ก.ย.', utilityYear: 2566, total: 3500, rent: 3500, water: 0, electric: 0, waterUnit: 0, electricUnit: 0, status: 'ยังไม่ถึงกำหนด', paidDate: null, slipUrl: null },
+                    { id: 107, billMonth: 'ม.ค.', billYear: 2566, dueDate: '2023-01-07', utilityMonth: 'ธ.ค.', utilityYear: 2565, total: 3500, rent: 3500, water: 0, electric: 0, waterUnit: 0, electricUnit: 0, status: 'ยังไม่ถึงกำหนด', paidDate: null, slipUrl: null },
+                    // บิลล่าสุดที่ต้องชำระ (Featured Bill) - มีค่าใช้จ่ายเพราะถือว่ามีการบันทึกหน่วยแล้ว แต่ยังไม่จ่าย
+                    { id: 106, billMonth: 'ธ.ค.', billYear: 2565, dueDate: '2022-12-07', utilityMonth: 'พ.ย.', utilityYear: 2565, total: 4700, rent: 3500, water: 300, electric: 900, waterUnit: 20, electricUnit: 128, status: 'ค้างชำระ', paidDate: null, slipUrl: null },
+                    // บิลที่ชำระแล้ว
+                    { id: 105, billMonth: 'พ.ย.', billYear: 2565, dueDate: '2022-11-07', utilityMonth: 'ต.ค.', utilityYear: 2565, total: 4250, rent: 3500, water: 150, electric: 600, waterUnit: 10, electricUnit: 85, status: 'ชำระแล้ว', paidDate: '2022-11-05', slipUrl: 'mock_slip_105.jpg' }, 
+                    { id: 104, billMonth: 'ต.ค.', billYear: 2565, dueDate: '2022-10-07', utilityMonth: 'ก.ย.', utilityYear: 2565, total: 3950, rent: 3500, water: 150, electric: 300, waterUnit: 9, electricUnit: 43, status: 'ชำระแล้ว', paidDate: '2022-10-06', slipUrl: 'mock_slip_104.jpg' },
+                    { id: 103, billMonth: 'ก.ย.', billYear: 2565, dueDate: '2022-09-07', utilityMonth: 'ส.ค.', utilityYear: 2565, total: 3500, rent: 3500, water: 0, electric: 0, waterUnit: 0, electricUnit: 0, status: 'ชำระแล้ว', paidDate: '2022-09-05', slipUrl: 'mock_slip_103.jpg' },
+                ]
+            },
+        };
+        
+        // Helper to find a bill (or deposit)
+        function findBillById(id) {
+            const data = contractDetailData[1]; 
+            if (id === 0) return data.deposit; 
+            return data.bills.find(b => b.id === id);
+        }
+
+        // =========================================================
+        // Utility Functions
+        // =========================================================
+        function toThaiDate(dateString) {
+            if (!dateString) return '—';
+            const [year, month, day] = dateString.split('-').map(Number);
+            const thaiYear = year + 543; 
+            return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${thaiYear}`;
+        }
+        
+        function formatCurrency(amount) {
+            return parseFloat(amount).toLocaleString('th-TH', { minimumFractionDigits: 2 });
+        }
+        
+        // *** Image Preview Function ***
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            const file = input.files[0];
+            const fileNameDisplay = document.getElementById(input.id.replace('Input', 'FileName'));
+
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+                fileNameDisplay.textContent = file.name;
+            } else if (file) {
+                preview.classList.add('hidden');
+                fileNameDisplay.textContent = file.name; // Show file name even if not image (e.g. PDF for slip)
+            } else {
+                 preview.classList.add('hidden');
+                 fileNameDisplay.textContent = '';
+            }
+        }
+        
+        // =========================================================
+        // BILLING LIST LOGIC
+        // =========================================================
+        
+        function getStatusStyling(status) {
+            if (status === 'ชำระแล้ว') return { text: 'text-green-600', border: 'border-l-green-500', icon: 'fa-circle-check', bg: 'bg-green-50' };
+            if (status === 'ค้างชำระ') return { text: 'text-red-600', border: 'border-l-red-500', icon: 'fa-triangle-exclamation', bg: 'bg-red-50' };
+            if (status === 'ยังไม่ถึงกำหนด') return { text: 'text-yellow-700', border: 'border-l-yellow-500', icon: 'fa-circle-exclamation', bg: 'bg-yellow-50' };
+            return { text: 'text-gray-500', border: 'border-l-gray-400', icon: 'fa-circle', bg: 'bg-gray-100' };
+        }
+
+        /**
+         * Generates the HTML for a single Bill Card.
+         */
+        function generateBillCardHtml(bill, isFeatured) {
+            const statusStyle = getStatusStyling(bill.status);
+            const isOverdue = bill.status === 'ค้างชำระ';
+            const cardClass = isFeatured 
+                ? `bg-white p-6 rounded-xl shadow-lg border-l-8 ${statusStyle.border} ${isOverdue ? 'bg-red-50/70 shadow-red-200/50' : 'shadow-lg'} transition-all duration-200 active:scale-[0.98] cursor-pointer`
+                : `bg-white p-4 rounded-xl shadow-md border-l-4 ${statusStyle.border} transition-all duration-200 active:scale-[0.98] cursor-pointer ${bill.status === 'ยังไม่ถึงกำหนด' ? 'opacity-90' : ''}`;
+            
+            const totalTextClass = isFeatured ? 'text-3xl' : 'text-lg'; 
+            const totalAmountTextClass = isFeatured ? 'text-gray-800' : 'text-blue-600';
+            const totalLabelClass = isFeatured ? 'text-lg font-semibold' : 'text-sm font-medium';
+
+            const utilityMonthDisplay = (bill.water === 0 && bill.electric === 0) 
+                ? `<span class="bg-gray-50 px-2 py-1 rounded text-gray-400">ค่าน้ำ/ไฟ: (ยังไม่เริ่มคิด)</span>`
+                : `<span class="bg-gray-50 px-2 py-1 rounded">ค่าน้ำ/ไฟของเดือน: <span class="font-semibold">${bill.utilityMonth} ${bill.utilityYear}</span></span>`;
+            
+            return `
+                <div onclick="openActionSheetModal(${bill.id});" class="${cardClass}">
+                    
+                    <!-- Top Row: Bill Month & Status -->
+                    <div class="flex justify-between items-center mb-2">
+                        <div>
+                             <p class="text-base font-bold text-gray-800">บิลเรียกเก็บ ${bill.billMonth} ${bill.billYear}</p>
+                        </div>
+                        <span class="${isFeatured ? 'text-lg' : 'text-sm'} ${statusStyle.text} font-semibold whitespace-nowrap ml-3 flex items-center">
+                            <i class="fa-solid ${statusStyle.icon} mr-1 ${isFeatured ? 'text-xl' : 'text-base'}"></i> ${bill.status}
+                        </span>
+                    </div>
+                    
+                    <!-- Middle Row: Rent/Utility Months -->
+                    <div class="flex flex-wrap gap-2 text-xs text-gray-600 mb-3 border-t pt-2">
+                        <span class="bg-gray-50 px-2 py-1 rounded">ค่าเช่าของเดือน: <span class="font-semibold">${bill.billMonth} ${bill.billYear}</span></span>
+                        ${utilityMonthDisplay}
+                    </div>
+                    
+                    <!-- Bottom Row: Breakdown and Total -->
+                    <div class="flex justify-between items-end border-t ${isFeatured ? 'pt-4' : 'pt-2'} mt-2">
+                        <div class="flex flex-col">
+                            <span class="${totalLabelClass} text-gray-600">รวมที่ต้องชำระ</span>
+                            <p class="${totalTextClass} font-extrabold ${totalAmountTextClass}">
+                                ${formatCurrency(bill.total)} บ.
+                            </p>
+                        </div>
+                        
+                        <div class="flex space-x-3 text-xs text-gray-600 ${isFeatured ? 'text-sm' : ''}">
+                            <div class="flex flex-col items-end">
+                                <span class="flex items-center text-gray-800"><i class="fa-solid fa-house mr-1 text-blue-500"></i><span class="hidden sm:inline">เช่า</span></span>
+                                <span class="font-bold text-gray-800">${formatCurrency(bill.rent)}</span>
+                            </div>
+                            <div class="flex flex-col items-end">
+                                <span class="flex items-center text-gray-800"><i class="fa-solid fa-tint mr-1 text-sky-500"></i><span class="hidden sm:inline">น้ำ (${bill.waterUnit} น.)</span></span>
+                                <span class="font-bold text-gray-800">${formatCurrency(bill.water)}</span>
+                            </div>
+                            <div class="flex flex-col items-end">
+                                <span class="flex items-center text-gray-800"><i class="fa-solid fa-plug-circle-bolt mr-1 text-orange-500"></i><span class="hidden sm:inline">ไฟ (${bill.electricUnit} น.)</span></span>
+                                <span class="font-bold text-gray-800">${formatCurrency(bill.electric)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            `;
+        }
+
+        function loadBillList(bills) {
+            const featuredContainer = document.getElementById('featured-bill-container');
+            const listContainer = document.getElementById('bill-list-container');
+            const noBillsMessage = document.getElementById('no-bills-message');
+            
+            if (!featuredContainer || !listContainer) return;
+            
+            featuredContainer.innerHTML = '';
+            listContainer.innerHTML = '';
+            
+            if (bills.length === 0) {
+                 listContainer.appendChild(noBillsMessage);
+                 noBillsMessage.classList.remove('hidden');
+                 return;
+            } else {
+                 noBillsMessage.classList.add('hidden');
+            }
+
+            // Featured Bill Logic: ต้องเป็นบิลที่ต้องชำระ
+            const dueBills = bills.filter(b => b.status === 'ค้างชำระ' || b.status === 'ยังไม่ถึงกำหนด');
+            const featuredBill = dueBills.length > 0 ? dueBills[0] : bills[0]; // แสดงบิลล่าสุดที่ไม่ใช่ 'ชำระแล้ว'
+            
+            if (featuredBill) {
+                const featuredHtml = generateBillCardHtml(featuredBill, true);
+                featuredContainer.insertAdjacentHTML('beforeend', featuredHtml);
+            }
+
+            // List Bill Logic: แสดงรายการทั้งหมด
+            const sortedBills = bills.sort((a, b) => {
+                 return b.id - a.id; 
+            });
+
+            sortedBills.forEach(bill => {
+                if (featuredBill && bill.id === featuredBill.id) return;
+                const billItem = generateBillCardHtml(bill, false);
+                listContainer.insertAdjacentHTML('beforeend', billItem);
+            });
+        }
+
+
+        // =========================================================
+        // MODAL LOGIC (Manage/Payment/ActionSheet/Deposit)
+        // =========================================================
+
+        const actionSheetModalEl = document.getElementById('actionSheetModal');
+        const manageBillModalEl = document.getElementById('manageBillModal');
+        const paymentModalEl = document.getElementById('paymentModal');
+        const depositModalEl = document.getElementById('depositModal');
+        const slipUploadInputEl = document.getElementById('slipUploadInput');
+        const confirmPaymentButtonEl = document.getElementById('confirmPaymentButton');
+        let currentBillIdForAction = null;
+        let currentBillIdForPayment = null;
+
+        const waterRate = contractDetailData[1].WaterRate;
+        const electricRate = contractDetailData[1].ElectricRate;
+        const availableMonths = [
+            { value: 'ม.ค. 2567', text: 'ม.ค. 2567' }, { value: 'ธ.ค. 2566', text: 'ธ.ค. 2566' },
+            { value: 'พ.ย. 2566', text: 'พ.ย. 2566' }, { value: 'ต.ค. 2566', text: 'ต.ค. 2566' },
+            { value: 'ก.ย. 2566', text: 'ก.ย. 2566' }, { value: 'ส.ค. 2566', text: 'ส.ค. 2566' },
+            { value: 'ก.ค. 2566', text: 'ก.ค. 2566' }, { value: 'มิ.ย. 2566', text: 'มิ.ย. 2566' },
+            { value: 'พ.ค. 2566', text: 'พ.ค. 2566' }, { value: 'เม.ย. 2566', text: 'เม.ย. 2566' },
+            { value: 'มี.ค. 2566', text: 'มี.ค. 2566' }, { value: 'ก.พ. 2566', text: 'ก.พ. 2566' },
+            { value: 'ม.ค. 2566', text: 'ม.ค. 2566' }, { value: 'ธ.ค. 2565', text: 'ธ.ค. 2565' },
+            { value: 'พ.ย. 2565', text: 'พ.ย. 2565' }, { value: 'ต.ค. 2565', text: 'ต.ค. 2565' },
+            { value: 'ก.ย. 2565', text: 'ก.ย. 2565' }, { value: 'ส.ค. 2565', text: 'ส.ค. 2565' }
+        ];
+
+
+        function toggleModal(modalEl, show) {
+            const content = modalEl.querySelector('.modal-content');
+            if (show) {
+                modalEl.classList.remove('hidden');
+                setTimeout(() => {
+                    content.classList.remove('hidden-modal');
+                }, 10);
+            } else {
+                content.classList.add('hidden-modal');
+                setTimeout(() => {
+                    modalEl.classList.add('hidden');
+                }, 300);
+            }
+        }
+        
+        // --- Action Sheet Modal ---
+        function openActionSheetModal(billId) {
+            const bill = findBillById(billId);
+            if (!bill || bill.id === 0) return;
+
+            currentBillIdForAction = billId;
+
+            document.getElementById('actionSheetTitle').textContent = `ตัวเลือกบิล: ${bill.billMonth} ${bill.billYear}`;
+            
+            const paymentBtn = document.getElementById('actionSheetPaymentBtn');
+            const manageBtn = document.getElementById('actionSheetManageBtn');
+
+            // Logic for disabling/enabling buttons
+            if (bill.status === 'ชำระแล้ว') {
+                paymentBtn.disabled = false;
+                paymentBtn.textContent = 'ดูหลักฐานการชำระ';
+                paymentBtn.classList.add('bg-gray-400', 'hover:bg-gray-500');
+                paymentBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            } else {
+                paymentBtn.disabled = false;
+                paymentBtn.textContent = 'แจ้งชำระเงิน';
+                paymentBtn.classList.remove('bg-gray-400', 'hover:bg-gray-500');
+                paymentBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            }
+
+            // Logic สำหรับ Manage Button (ถ้าชำระแล้วก็ยังคลิกได้เพื่อดูข้อมูล)
+            manageBtn.textContent = (bill.status === 'ชำระแล้ว') ? 'ดูรายละเอียดบิล (View-Only)' : 'แก้ไข/บันทึกหน่วยน้ำไฟ';
+
+            toggleModal(actionSheetModalEl, true);
+        }
+        
+        function closeActionSheetModal() {
+            toggleModal(actionSheetModalEl, false);
+        }
+        
+        function selectAction(action) {
+            closeActionSheetModal();
+            const billId = currentBillIdForAction;
+            if (action === 'payment') {
+                openPaymentModal(billId);
+            } else if (action === 'manage') {
+                openManageBillModal(billId);
+            }
+        }
+
+        // --- Manage/Edit Bill Modal ---
+        function openManageBillModal(billId = null) {
+            const isEdit = billId !== null;
+            const bill = isEdit ? findBillById(billId) : null;
+            const isPaid = isEdit && bill.status === 'ชำระแล้ว';
+
+            // Rates Display
+            document.getElementById('waterRateDisplay').textContent = formatCurrency(waterRate);
+            document.getElementById('electricRateDisplay').textContent = formatCurrency(electricRate);
+            
+            // Title & Inputs
+            document.getElementById('manageBillTitle').innerHTML = isEdit 
+                ? `<i class="fa-solid fa-edit mr-2 ${isPaid ? 'text-gray-500' : 'text-blue-600'}"></i> ${isPaid ? 'รายละเอียดบิล' : 'แก้ไขบิล'} ${bill.billMonth} ${bill.billYear}`
+                : `<i class="fa-solid fa-receipt mr-2 text-green-600"></i> สร้างบิลใหม่`;
+            
+            // Populate Dropdowns
+            populateMonthYearDropdowns(bill, isPaid);
+
+            // Populate Inputs
+            document.getElementById('billIdInput').value = isEdit ? bill.id : '';
+            document.getElementById('rentInput').value = isEdit ? bill.rent : contractDetailData[1].rent;
+            document.getElementById('waterUnitInput').value = isEdit ? bill.waterUnit : '';
+            document.getElementById('electricUnitInput').value = isEdit ? bill.electricUnit : '';
+            document.getElementById('waterInput').value = isEdit ? bill.water : '';
+            document.getElementById('electricInput').value = isEdit ? bill.electric : '';
+            
+            // Set ReadOnly/Disabled State
+            const inputs = document.querySelectorAll('#manageBillForm input, #manageBillForm select');
+            inputs.forEach(input => {
+                input.disabled = isPaid;
+                if (isPaid) {
+                    input.classList.add('bg-gray-100');
+                } else {
+                    input.classList.remove('bg-gray-100');
+                }
+            });
+            
+            // Meter Image Required Check
+            document.getElementById('waterMeterImageInput').required = !isPaid; 
+            document.getElementById('electricMeterImageInput').required = !isPaid; 
+            document.getElementById('waterMeterImageInput').value = ''; 
+            document.getElementById('electricMeterImageInput').value = ''; 
+            document.getElementById('waterMeterFileName').textContent = isPaid ? 'ภาพมิเตอร์น้ำถูกบันทึกแล้ว' : ''; 
+            document.getElementById('electricMeterFileName').textContent = isPaid ? 'ภาพมิเตอร์ไฟถูกบันทึกแล้ว' : ''; 
+            
+            document.getElementById('waterMeterPreview').classList.add('hidden');
+            document.getElementById('electricMeterPreview').classList.add('hidden');
+
+            // Button Logic
+            const saveBtn = document.getElementById('manageBillSaveBtn');
+            if (isPaid) {
+                saveBtn.textContent = 'บิลชำระแล้ว (แก้ไขไม่ได้)';
+                saveBtn.disabled = true;
+                saveBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                saveBtn.classList.add('bg-gray-400');
+            } else {
+                saveBtn.textContent = 'บันทึกบิล';
+                saveBtn.disabled = false;
+                saveBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                saveBtn.classList.remove('bg-gray-400');
+            }
+
+
+            // Dummy Save function
+            document.getElementById('manageBillForm').onsubmit = (e) => {
+                e.preventDefault();
+                if (!isPaid && (document.getElementById('waterMeterImageInput').files.length === 0 || document.getElementById('electricMeterImageInput').files.length === 0)) {
+                     alert("กรุณาแนบภาพมิเตอร์ทั้งน้ำและไฟเพื่อยืนยันการบันทึกหน่วย");
+                     return;
+                }
+                const total = parseFloat(document.getElementById('rentInput').value) + 
+                               parseFloat(document.getElementById('waterInput').value || 0) + 
+                               parseFloat(document.getElementById('electricInput').value || 0);
+                alert(`${isEdit ? 'แก้ไข' : 'สร้าง'}บิล ID ${billId || 'ใหม่'} พร้อมบันทึกภาพมิเตอร์แล้ว! (รวม: ${formatCurrency(total)} บ.)`);
+                closeManageBillModal();
+            };
+            
+            // Add onchange handlers for file names display
+            document.getElementById('waterMeterImageInput').onchange = (e) => {
+                document.getElementById('waterMeterFileName').textContent = e.target.files.length ? e.target.files[0].name : '';
+                previewImage(e.target, 'waterMeterPreview');
+            };
+            document.getElementById('electricMeterImageInput').onchange = (e) => {
+                document.getElementById('electricMeterFileName').textContent = e.target.files.length ? e.target.files[0].name : '';
+                previewImage(e.target, 'electricMeterPreview');
+            };
+
+            toggleModal(manageBillModalEl, true);
+        }
+
+        function closeManageBillModal() {
+            toggleModal(manageBillModalEl, false);
+        }
+
+        // *** Generate Dropdown Options ***
+        function populateMonthYearDropdowns(bill, isPaid) {
+            const billSelect = document.getElementById('billMonthYearSelect');
+            const utilitySelect = document.getElementById('utilityMonthYearSelect');
+            
+            billSelect.innerHTML = '';
+            utilitySelect.innerHTML = '';
+            
+            availableMonths.forEach(month => {
+                const billOption = document.createElement('option');
+                billOption.value = month.value;
+                billOption.textContent = month.text;
+                billSelect.appendChild(billOption);
+
+                const utilityOption = document.createElement('option');
+                utilityOption.value = month.value;
+                utilityOption.textContent = month.text;
+                utilitySelect.appendChild(utilityOption);
+            });
+            
+            if (bill) {
+                const bMonthYear = `${bill.billMonth} ${bill.billYear}`;
+                const uMonthYear = `${bill.utilityMonth} ${bill.utilityYear}`;
+                
+                // Select current values
+                billSelect.value = bMonthYear;
+                utilitySelect.value = uMonthYear;
+            }
+        }
+
+        // *** Calculation Function ***
+        function calculateUtilityCost() {
+            const waterUnit = parseFloat(document.getElementById('waterUnitInput').value) || 0;
+            const electricUnit = parseFloat(document.getElementById('electricUnitInput').value) || 0;
+
+            const waterCost = waterUnit * waterRate;
+            const electricCost = electricUnit * electricRate;
+
+            document.getElementById('waterInput').value = waterCost.toFixed(2);
+            document.getElementById('electricInput').value = electricCost.toFixed(2);
+        }
+        
+        // --- Payment Modal ---
+        function openPaymentModal(billId) {
+            const data = findBillById(billId);
+            currentBillIdForPayment = billId;
+            
+            if (!data || data.id === 0) { 
+                 alert("ไม่สามารถชำระค่าประกันผ่านช่องทางนี้ได้");
+                 return;
+            }
+
+            const statusStyle = getStatusStyling(data.status);
+
+            // Bill Detail Content
+            const isPaid = data.status === 'ชำระแล้ว';
+            const paidInfo = isPaid 
+                ? `<p class="flex justify-between border-t pt-2"><span>ชำระเมื่อ:</span><span class="font-medium text-green-600">${toThaiDate(data.paidDate)}</span></p>`
+                : `<p class="flex justify-between border-t pt-2"><span>ครบกำหนด:</span><span class="font-medium">${toThaiDate(data.dueDate)}</span></p>`; 
+
+            const contentHtml = `
+                <p class="text-base font-bold text-gray-800">บิลเรียกเก็บ ${data.billMonth} ${data.billYear}</p>
+                <div class="space-y-2 text-sm">
+                    <p class="flex justify-between border-b pb-1"><span>รวมทั้งหมด:</span><span class="font-extrabold text-2xl text-blue-600">${formatCurrency(data.total)} บ.</span></p>
+                    <p class="flex justify-between"><span><i class="fa-solid fa-house mr-1 text-blue-500"></i> ค่าเช่า:</span><span class="font-medium">${formatCurrency(data.rent)}</span></p>
+                    <p class="flex justify-between"><span><i class="fa-solid fa-tint mr-1 text-sky-500"></i> ค่าน้ำ (${data.waterUnit} น.):</span><span class="font-medium">${formatCurrency(data.water)}</span></p>
+                    <p class="flex justify-between"><span><i class="fa-solid fa-plug-circle-bolt mr-1 text-orange-500"></i> ค่าไฟ (${data.electricUnit} น.):</span><span class="font-medium">${formatCurrency(data.electric)}</span></p>
+                    ${paidInfo}
+                </div>
+            `;
+            
+            document.getElementById('paymentDetailContent').innerHTML = contentHtml;
+            document.getElementById('paymentStatus').textContent = data.status;
+            document.getElementById('paymentStatus').className = `font-bold ${statusStyle.text}`;
+
+            // Reset/Setup upload UI
+            slipUploadInputEl.value = '';
+            document.getElementById('slipFileName').textContent = '';
+            document.getElementById('slipStatusText').textContent = isPaid ? 'หลักฐานการชำระเงินถูกบันทึกแล้ว' : 'กรุณาแนบไฟล์';
+            document.getElementById('slipStatusText').classList.toggle('text-red-500', !isPaid);
+            document.getElementById('slipStatusText').classList.toggle('text-green-600', isPaid);
+            document.getElementById('slipPreview').classList.add('hidden'); // ซ่อน Preview เดิม
+            
+            confirmPaymentButtonEl.disabled = isPaid;
+            slipUploadInputEl.disabled = isPaid;
+
+            if (isPaid) {
+                 confirmPaymentButtonEl.textContent = 'ดูสลิปชำระเงิน';
+                 confirmPaymentButtonEl.classList.add('bg-gray-400', 'hover:bg-gray-500');
+                 confirmPaymentButtonEl.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                 // Show Mock Slip Preview
+                 document.getElementById('slipPreview').src = data.slipUrl || 'placeholder.jpg'; 
+                 document.getElementById('slipPreview').classList.remove('hidden');
+                 document.getElementById('slipFileName').textContent = data.slipUrl || 'หลักฐาน (จำลอง)';
+            } else {
+                 confirmPaymentButtonEl.textContent = 'ยืนยันการชำระ';
+                 confirmPaymentButtonEl.classList.remove('bg-gray-400', 'hover:bg-gray-500');
+                 confirmPaymentButtonEl.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            }
+
+            // Enable/Disable button based on file input (only if not paid)
+            slipUploadInputEl.onchange = (e) => {
+                document.getElementById('slipFileName').textContent = e.target.files.length ? e.target.files[0].name : '';
+                previewImage(e.target, 'slipPreview');
+                if (!isPaid) {
+                    confirmPaymentButtonEl.disabled = e.target.files.length === 0;
+                    document.getElementById('slipStatusText').textContent = e.target.files.length ? 'พร้อมยืนยันการชำระ' : 'กรุณาแนบไฟล์';
+                }
+            };
+
+            toggleModal(paymentModalEl, true);
+        }
+
+        function closePaymentModal() {
+            toggleModal(paymentModalEl, false);
+        }
+        
+        function submitPayment() {
+            if (slipUploadInputEl.files.length === 0) {
+                alert("กรุณาแนบสลิปก่อนยืนยันการชำระ");
+                return;
+            }
+            alert(`แจ้งชำระบิล ID ${currentBillIdForPayment} พร้อมแนบสลิปเรียบร้อยแล้ว!`);
+            closePaymentModal();
+            // ในระบบจริง: ต้องส่งไฟล์และข้อมูลไป API
+        }
+
+        // --- Deposit Modal ---
+        function openDepositModal() {
+             const deposit = contractDetailData[1].deposit;
+             const content = document.getElementById('depositDetailContent');
+             const refundSlipSection = document.getElementById('refundSlipSection');
+             
+             // Content for Deposit Detail (Not Refund Action)
+             content.innerHTML = `
+                 <p class="text-base font-bold text-gray-800">รายละเอียดเงินประกัน</p>
+                 <div class="space-y-2 text-sm">
+                     <p class="flex justify-between"><span>จำนวนเงินประกัน:</span><span class="font-bold text-xl text-yellow-600">${formatCurrency(deposit.amount)} บ.</span></p>
+                     <p class="flex justify-between"><span>วันที่ชำระ:</span><span class="font-medium">${toThaiDate(deposit.paidDate)}</span></p>
+                     <p class="flex justify-between border-t pt-2"><span>สถานะการรับเงิน:</span><span class="text-green-600 font-bold">${deposit.status}</span></p>
+                 </div>
+                 ${deposit.refundStatus === 'คืนเงินแล้ว' && deposit.refundSlipUrl ? `<div class="mt-4 border-t pt-4"><p class="text-base font-bold text-gray-800 mb-2">สลิปคืนเงิน:</p><img src="${deposit.refundSlipUrl}" alt="สลิปคืนเงิน" class="w-full max-h-40 object-contain rounded-md shadow-md"></div>` : ''}
+             `;
+             
+             // Hide Refund Action section for simple view
+             refundSlipSection.innerHTML = '';
+             
+             toggleModal(depositModalEl, true);
+        }
+
+        function closeDepositModal() {
+            toggleModal(depositModalEl, false);
+        }
+
+        // --- Refund Slip Modal (Open from Header Button) ---
+        function openRefundSlipModal() {
+            const deposit = contractDetailData[1].deposit;
+            const modal = document.getElementById('depositModal');
+            const refundSlipSection = document.getElementById('refundSlipSection');
+            
+            // Check if already refunded
+            if (deposit.refundStatus === 'คืนเงินแล้ว') {
+                openDepositModal(); // Show detail instead
+                return;
+            }
+
+            // Set Title & Basic Content
+            modal.querySelector('h2').innerHTML = `<i class="fa-solid fa-vault mr-2 text-yellow-600"></i> บันทึกสลิปคืนเงิน`;
+            modal.querySelector('#depositDetailContent').innerHTML = `
+                 <p class="text-base font-bold text-gray-800">ยืนยันการคืนเงินจำนวน ${formatCurrency(deposit.amount)} บ. ให้แก่ผู้เช่า</p>
+                 <small class="text-red-500">กรุณาแนบหลักฐานการโอนเงินคืน</small>
+            `;
+            
+            // Refund Slip UI
+            refundSlipSection.innerHTML = `
+                <div class="mb-4">
+                    <label for="refundSlipInput" class="custom-file-upload w-full flex flex-col items-center justify-center text-red-700 bg-red-50 border-red-300 h-20">
+                        <i class="fa-solid fa-file-invoice-dollar text-xl"></i>
+                        <span class="text-xs">เลือกไฟล์สลิปคืนเงิน (รูปภาพ/PDF)</span>
+                        <span id="refundSlipFileName" class="text-gray-500 text-xs truncate w-full text-center"></span>
+                    </label>
+                    <input id="refundSlipInput" type="file" accept="image/*,.pdf" class="hidden" onchange="previewImage(this, 'refundSlipPreview');">
+                    <img id="refundSlipPreview" class="mt-2 w-full max-h-40 object-contain rounded-md shadow-md hidden" src="" alt="สลิปคืนเงิน">
+                </div>
+                
+                <div class="flex justify-end pt-4 space-x-3">
+                    <button type="button" onclick="closeDepositModal();" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition">
+                        ยกเลิก
+                    </button>
+                    <button onclick="submitRefundSlip();" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition" disabled id="confirmRefundButton">
+                        <i class="fa-solid fa-check mr-1"></i> ยืนยันการคืนเงิน
+                    </button>
+                </div>
+            `;
+            
+            const refundSlipInput = document.getElementById('refundSlipInput');
+            const confirmRefundButton = document.getElementById('confirmRefundButton');
+            
+            refundSlipInput.onchange = (e) => {
+                previewImage(e.target, 'refundSlipPreview');
+                confirmRefundButton.disabled = e.target.files.length === 0;
+            };
+
+            // Re-use Deposit Modal for Refund Action
+            toggleModal(depositModalEl, true);
+        }
+
+        function submitRefundSlip() {
+            const refundSlipInput = document.getElementById('refundSlipInput');
+            if (refundSlipInput.files.length === 0) {
+                alert("กรุณาแนบสลิปคืนเงิน");
+                return;
+            }
+            const deposit = contractDetailData[1].deposit;
+            deposit.refundStatus = 'คืนเงินแล้ว';
+            deposit.refundDate = new Date().toISOString().split('T')[0]; // Mock current date
+            deposit.refundSlipUrl = 'mock_refund_slip.jpg'; // Mock file path
+
+            alert(`บันทึกสลิปคืนเงินจำนวน ${formatCurrency(deposit.amount)} บ. เรียบร้อยแล้ว!`);
+            closeDepositModal();
+            loadContractDetail(1); // Refresh UI
+        }
+
+
+        // =========================================================
+        // CONTRACT DETAIL VIEW LOGIC
+        // =========================================================
+        
+        function loadContractDetail(contractId) {
+            const data = contractDetailData[contractId];
+            if (!data) {
+                document.getElementById('detailRoomNumberTitle').textContent = 'ไม่พบข้อมูล';
+                return;
+            }
+            
+            // 1. Populate Title & Contract Info
+            document.getElementById('detailRoomNumberTitle').textContent = `${data.room} - ${data.tenant}`;
+
+            // Populate Contract Info
+            document.getElementById('contractStartDate').textContent = toThaiDate(data.start);
+            document.getElementById('contractEndDate').textContent = toThaiDate(data.end);
+            document.getElementById('billDueDay').textContent = data.dueDay;
+
+            // 2. Load Deposit Info into Header
+            const deposit = data.deposit;
+            const depositAmountEl = document.getElementById('depositAmount');
+            const depositStatusIconEl = document.getElementById('depositStatusIcon');
+            const refundBtn = document.getElementById('refundButton');
+            
+            if (deposit) {
+                const isPaid = deposit.status === 'ชำระแล้ว';
+                const isRefunded = deposit.refundStatus === 'คืนเงินแล้ว';
+
+                depositAmountEl.textContent = `${formatCurrency(deposit.amount)} บ.`;
+                
+                if (isPaid) {
+                    depositStatusIconEl.classList.add('fa-circle-check', 'text-green-600');
+                    depositStatusIconEl.classList.remove('fa-triangle-exclamation', 'text-red-600');
+                } else {
+                    depositStatusIconEl.classList.add('fa-triangle-exclamation', 'text-red-600');
+                    depositStatusIconEl.classList.remove('fa-circle-check', 'text-green-600');
+                }
+
+                // Refund Button Logic
+                refundBtn.classList.remove('hidden');
+                if (isRefunded) {
+                    refundBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+                    refundBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                    refundBtn.innerHTML = `<i class="fa-solid fa-check-circle mr-1"></i> คืนเงินแล้ว`;
+                } else {
+                    refundBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+                    refundBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                    refundBtn.innerHTML = `<i class="fa-solid fa-arrow-rotate-left mr-1"></i> คืนค่าประกัน`;
+                }
+            } else {
+                depositAmountEl.textContent = 'ไม่พบข้อมูล';
+                depositStatusIconEl.classList.add('hidden');
+                refundBtn.classList.add('hidden');
+            }
+            
+            // 3. Load Bill List (This also loads the featured card)
+            loadBillList(data.bills);
+
+        }
+
+
+        // =========================================================
+        // DOM Initialization
+        // =========================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadContractDetail(1);
+        });
+    </script>
+
+</body>
+</html>

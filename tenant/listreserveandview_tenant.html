@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>กิจกรรมของฉัน - ฝั่งผู้เช่า</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .bottom-sheet { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); transform: translateY(100%); }
+        .bottom-sheet.active { transform: translateY(0); }
+        .mask { transition: opacity 0.3s; opacity: 0; pointer-events: none; }
+        .mask.active { opacity: 1; pointer-events: auto; }
+
+        .unified-bar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+        }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+    </style>
+</head>
+<body class="min-h-screen"> 
+
+    <div class="h-screen flex flex-col bg-white">
+        
+        <!-- HEADER -->
+        <header class="w-full pt-12 px-6 pb-4 flex justify-between items-end">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-800">กิจกรรมของฉัน</h1>
+                <p class="text-sm text-slate-400">ติดตามสถานะการเช่าของคุณ</p>
+            </div>
+            <button onclick="history.back()" class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-600">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+        </header>
+        
+        <!-- TABS SELECTOR -->
+        <div class="px-6 mt-2">
+            <div class="flex bg-slate-100 p-1 rounded-2xl">
+                <button onclick="switchTab('viewing')" id="tab-viewing" class="tab-btn flex-1 py-3 rounded-xl text-sm font-semibold transition-all duration-300 text-slate-500">
+                    นัดดูหอพัก
+                </button>
+                <button onclick="switchTab('booking')" id="tab-booking" class="tab-btn flex-1 py-3 rounded-xl text-sm font-semibold transition-all duration-300 text-slate-800 bg-white shadow-sm">
+                    รายการจอง
+                </button>
+            </div>
+        </div>
+
+        <!-- LIST CONTENT -->
+        <main class="flex-1 overflow-y-auto px-6 pt-6 space-y-4 bg-slate-50 mt-6 rounded-t-[32px] no-scrollbar border-t border-slate-100">
+            <div id="content-viewing" class="tab-content space-y-4"></div>
+            <div id="content-booking" class="tab-content space-y-4 active"></div>
+            <div class="h-32"></div>
+        </main>
+
+        <!-- UNIFIED BOTTOM BAR -->
+        <div class="unified-bar fixed bottom-0 left-0 right-0 z-50 px-6 pt-3 pb-safe border-t border-slate-100">
+            <div class="flex justify-between items-center max-w-md mx-auto">
+                <div class="flex flex-col items-center text-blue-600">
+                    <i class="fa-solid fa-rectangle-list text-xl"></i>
+                    <span class="text-[10px] mt-1 font-medium">กิจกรรม</span>
+                </div>
+                <div class="flex flex-col items-center text-slate-400">
+                    <i class="fa-solid fa-house text-xl"></i>
+                    <span class="text-[10px] mt-1 font-medium">หน้าหลัก</span>
+                </div>
+                <div class="flex flex-col items-center text-slate-400">
+                    <i class="fa-solid fa-user text-xl"></i>
+                    <span class="text-[10px] mt-1 font-medium">โปรไฟล์</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- PAYMENT SHEET -->
+<div id="actionMask" class="mask fixed inset-0 bg-black/40 z-[60] backdrop-blur-sm" onclick="closeAction()"></div>
+<div id="actionSheet" class="bottom-sheet fixed bottom-0 left-0 w-full bg-white z-[70] rounded-t-[32px] shadow-2xl overflow-hidden">
+    <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-4"></div>
+    <div class="p-6">
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <h2 class="text-xl font-bold text-slate-800">ชำระเงินมัดจำ</h2>
+                <p id="sel-name" class="text-blue-600 text-sm font-medium"></p>
+            </div>
+            <button onclick="closeAction()" class="text-slate-400 p-1"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+
+        <!-- รายละเอียดการโอนเงิน -->
+        <div class="space-y-4">
+            <!-- ยอดเงินที่ต้องโอน -->
+            <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex justify-between items-center">
+                <div>
+                    <p class="text-[10px] text-blue-500 font-bold uppercase tracking-wider">จำนวนเงินที่ต้องโอน</p>
+                    <p class="text-2xl font-black text-blue-700">฿ 1,000.00</p>
+                </div>
+                <button onclick="copyToClipboard('1000', 'copy-price-btn')" id="copy-price-btn" class="bg-white text-blue-600 border border-blue-200 px-4 py-2 rounded-xl text-xs font-bold shadow-sm active:scale-95 transition-all">
+                    <i class="fa-regular fa-copy mr-1"></i> คัดลอกยอด
+                </button>
+            </div>
+
+            <!-- บัญชีธนาคาร -->
+            <div class="bg-slate-900 rounded-[24px] p-6 text-white relative overflow-hidden shadow-xl">
+                <!-- ตกแต่งพื้นหลังบัตร -->
+                <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-white/5 rounded-full"></div>
+                
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xl">K</div>
+                    <div>
+                        <p class="text-xs text-white/60 font-medium">ธนาคารกสิกรไทย</p>
+                        <p class="text-sm font-bold">บจก. หอพักสุขสบาย (สำนักงานใหญ่)</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-end">
+                    <div>
+                        <p class="text-[10px] text-white/40 font-bold uppercase tracking-[2px] mb-1">เลขที่บัญชี</p>
+                        <p class="text-2xl font-mono font-bold tracking-wider" id="acc-number">123-4-56789-0</p>
+                    </div>
+                    <button onclick="copyToClipboard('1234567890', 'copy-acc-btn')" id="copy-acc-btn" class="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95">
+                        <i class="fa-regular fa-copy mr-1"></i> คัดลอกเลขบัญชี
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- อัปโหลดสลิป -->
+        <div class="mt-8 space-y-3">
+            <label class="text-sm font-bold text-slate-700 ml-1">แนบหลักฐานการโอน (สลิป)</label>
+            <div onclick="document.getElementById('up-status').innerHTML='<span >✅ เลือกสลิปเรียบร้อย: slip_01.png</span>'" class="border-2 border-dashed border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center bg-slate-50 active:bg-slate-100 transition cursor-pointer">
+                <i class="fa-solid fa-image text-3xl text-slate-300 mb-2"></i>
+                <p id="up-status" class="text-sm text-slate-400 font-medium">กดเพื่อเลือกรูปภาพสลิป</p>
+            </div>
+        </div>
+
+        <button onclick="confirmPayment()" class="w-full mt-8 py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-lg shadow-blue-200 active:scale-[0.98] transition-all text-lg">
+            ส่งหลักฐานการจอง
+        </button>
+        <div class="h-6"></div>
+    </div>
+</div>
+    <script>
+        // 1. นัดดูหอพัก: รออนุมัติ, อนุมัติ, ไม่อนุมัติ
+        const viewingHistory = [
+            { id: 101, name: 'The Grand Residence', date: '25 ธ.ค. 68 | 14:00', status: 'รออนุมัติ' },
+            { id: 102, name: 'Campus Park Room 402', date: '22 ธ.ค. 68 | 10:30', status: 'อนุมัติ' },
+            { id: 103, name: 'Sky High Condo', date: '20 ธ.ค. 68 | 16:00', status: 'ไม่อนุมัติ' }
+        ];
+
+        // 2. รายการจอง: รออนุมัติ, อนุมัติ, รอตรวจสอบสลิป, สลิปไม่ถูกต้อง, จองสำเร็จ, ไม่อนุมัติ
+        let bookingData = [
+            { id: 1, name: 'ห้อง 101 - The Grand', info: 'รอการตอบรับจากเจ้าของหอพัก', status: 'รออนุมัติ' },
+            { id: 2, name: 'ห้อง 505 - City Loft', info: 'ได้รับการอนุมัติแล้ว กรุณาชำระมัดจำ', status: 'อนุมัติ' },
+            { id: 3, name: 'ห้อง 302 - Green View', info: 'เจ้าของหอพักกำลังตรวจสอบหลักฐาน', status: 'รอตรวจสอบสลิป' },
+            { id: 4, name: 'ห้อง 201 - Blue Marine', info: 'สลิปไม่ชัดเจนหรือยอดไม่ตรง กรุณาส่งใหม่', status: 'สลิปไม่ถูกต้อง' },
+            { id: 5, name: 'ห้อง 412 - Serenity', info: 'ยินดีด้วย! การจองของคุณเสร็จสมบูรณ์', status: 'จองสำเร็จ' },
+            { id: 6, name: 'ห้อง 108 - Riverside', info: 'ขออภัย ห้องนี้ถูกจองไปก่อนหน้าแล้ว', status: 'ไม่อนุมัติ' }
+        ];
+
+        const statusStyles = {
+            'รออนุมัติ': 'bg-amber-50 text-amber-600 border-amber-200',
+            'อนุมัติ': 'bg-blue-50 text-blue-600 border-blue-200',
+            'ไม่อนุมัติ': 'bg-red-50 text-red-600 border-red-200',
+            'รอตรวจสอบสลิป': 'bg-indigo-50 text-indigo-600 border-indigo-200',
+            'สลิปไม่ถูกต้อง': 'bg-rose-50 text-rose-600 border-rose-200',
+            'จองสำเร็จ': 'bg-emerald-50 text-emerald-600 border-emerald-200'
+        };
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'shadow-sm', 'text-slate-800');
+                btn.classList.add('text-slate-500');
+            });
+            document.getElementById(`tab-${tab}`).classList.add('bg-white', 'shadow-sm', 'text-slate-800');
+            
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(`content-${tab}`).classList.add('active');
+        }
+
+        function openAction(id) {
+            const item = bookingData.find(i => i.id === id);
+            // ให้กดได้เฉพาะสถานะ "อนุมัติ" หรือ "สลิปไม่ถูกต้อง"
+            if (item && (item.status === 'อนุมัติ' || item.status === 'สลิปไม่ถูกต้อง')) {
+                document.getElementById('sel-name').innerText = item.name;
+                document.getElementById('up-status').innerText = 'แตะเพื่อเลือกรูปภาพ';
+                document.getElementById('actionMask').classList.add('active');
+                document.getElementById('actionSheet').classList.add('active');
+            }
+        }
+
+        function closeAction() {
+            document.getElementById('actionSheet').classList.remove('active');
+            setTimeout(() => { document.getElementById('actionMask').classList.remove('active'); }, 300);
+        }
+
+        function confirmPayment() {
+            alert('ส่งสลิปเรียบร้อยแล้ว! สถานะจะเปลี่ยนเป็น "รอตรวจสอบสลิป"');
+            closeAction();
+            // ในงานจริงต้องมี API update สถานะที่นี่
+        }
+
+        function render() {
+            // Render Viewing History
+            const vList = document.getElementById('content-viewing');
+            vList.innerHTML = viewingHistory.map(item => `
+                <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex justify-between items-center">
+                    <div>
+                        <p class="font-bold text-slate-800">${item.name}</p>
+                        <p class="text-xs text-slate-400 mt-1"><i class="fa-regular fa-clock mr-1"></i> ${item.date}</p>
+                    </div>
+                    <span class="text-[10px] font-bold px-3 py-1.5 rounded-full border ${statusStyles[item.status]}">${item.status}</span>
+                </div>
+            `).join('');
+
+            // Render Booking List
+            const bList = document.getElementById('content-booking');
+            bList.innerHTML = bookingData.map(item => {
+                const canPay = (item.status === 'อนุมัติ' || item.status === 'สลิปไม่ถูกต้อง');
+                const style = statusStyles[item.status];
+                
+                return `
+                    <div onclick="openAction(${item.id})" class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm transition-all ${canPay ? 'active:bg-slate-50 ring-2 ring-transparent active:ring-blue-100' : ''}">
+                        <div class="flex justify-between items-start mb-3">
+                            <p class="font-bold text-slate-800 text-lg leading-none">${item.name}</p>
+                            <span class="text-[10px] font-bold px-2.5 py-1 rounded-md border ${style}">${item.status}</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-4">${item.info}</p>
+                        ${canPay ? `
+                            <div class="flex items-center text-blue-600 text-xs font-bold bg-blue-50 w-fit px-3 py-2 rounded-xl animate-pulse">
+                                <i class="fa-solid fa-wallet mr-2"></i> กดที่นี่เพื่อชำระเงินมัดจำ
+                            </div>
+                        ` : ''}
+                        ${item.status === 'จองสำเร็จ' ? `
+                             <div class="flex items-center text-emerald-600 text-xs font-bold bg-emerald-50 w-fit px-3 py-2 rounded-xl">
+                                <i class="fa-solid fa-circle-check mr-2"></i> เตรียมตัวเข้าอยู่ได้เลย!
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            render();
+            switchTab('booking');
+        });
+
+
+            // เพิ่มฟังก์ชันสำหรับคัดลอกข้อความ
+    function copyToClipboard(text, btnId) {
+        // สร้าง element ชั่วคราวเพื่อคัดลอก
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+
+        // แสดงผล Feedback ที่ปุ่ม
+        const btn = document.getElementById(btnId);
+        const originalHTML = btn.innerHTML;
+        
+        btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> คัดลอกแล้ว';
+        
+        if (btnId === 'copy-acc-btn') {
+            btn.classList.add('bg-emerald-500', 'border-emerald-400');
+            btn.classList.remove('bg-white/10');
+        } else {
+            btn.classList.add('text-emerald-600', 'border-emerald-200', 'bg-emerald-50');
+            btn.classList.remove('text-blue-600', 'bg-white');
+        }
+
+        // คืนค่าปุ่มหลังผ่านไป 2 วินาที
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            if (btnId === 'copy-acc-btn') {
+                btn.classList.remove('bg-emerald-500', 'border-emerald-400');
+                btn.classList.add('bg-white/10');
+            } else {
+                btn.classList.remove('text-emerald-600', 'border-emerald-200', 'bg-emerald-50');
+                btn.classList.add('text-blue-600', 'bg-white');
+            }
+        }, 2000);
+    }
+
+    // ฟังก์ชันอื่นๆ ยังคงเดิม...
+    function confirmPayment() {
+        alert('ส่งหลักฐานเรียบร้อย! ระบบจะดำเนินการตรวจสอบภายใน 24 ชม.');
+        closeAction();
+    }
+    </script>
+</body>
+</html>

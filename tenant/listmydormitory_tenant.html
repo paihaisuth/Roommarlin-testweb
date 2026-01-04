@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>My Rentals - Power Bar System</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+
+        /* หลอดพลังงานสัญญา (Power Bar) */
+        .power-bar-container { @apply h-3.5 w-full bg-slate-100 rounded-full relative overflow-hidden mt-2 border border-white; }
+        .power-bar-fill { @apply h-full rounded-full transition-all duration-1000 ease-out; }
+        .power-bar-glow { box-shadow: 0 0 15px rgba(79, 70, 229, 0.3); }
+
+        /* Animation */
+        .bottom-sheet { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); transform: translateY(100%); }
+        .bottom-sheet.active { transform: translateY(0); }
+        .mask { transition: opacity 0.3s; opacity: 0; pointer-events: none; }
+        .mask.active { opacity: 1; pointer-events: auto; }
+        
+        .active-press:active { transform: scale(0.97); transition: 0.2s; }
+    </style>
+</head>
+<body class="min-h-screen relative overflow-hidden text-slate-800"> 
+
+    <!-- ========================================================= -->
+    <!-- VIEW 1: DASHBOARD (หอพักของฉัน) -->
+    <!-- ========================================================= -->
+    <div id="view-dashboard" class="h-screen overflow-y-auto pb-32">
+        
+        <header class="px-7 pt-14 pb-6">
+            <h1 class="text-2xl font-bold text-slate-800 tracking-tight">หอพักของฉัน</h1>
+            <p class="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1">Active Rental Status</p>
+        </header>
+
+        <main class="px-5 space-y-6">
+            
+            <!-- การ์ดที่ 1: สถานะค้างชำระ -->
+            <div onclick="openActionSheet('The Campus Condo', '305', 'ค้างชำระ', '฿5,850', 'รออนุมัติ')" class="active-press bg-white rounded-[40px] p-6 shadow-sm border border-white transition-all">
+                <div class="flex gap-4 mb-5">
+                    <div class="w-14 h-14 rounded-[20px] overflow-hidden flex-shrink-0 shadow-sm">
+                        <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=2070&auto=format&fit=crop" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-slate-800 text-lg">The Campus</h3>
+                        <p class="text-indigo-600 font-black text-xs uppercase tracking-widest">ห้อง 305</p>
+                    </div>
+                </div>
+
+                <!-- แสดงสถานะ (เช่า & ซ่อม) -->
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <div class="bg-rose-50 p-4 rounded-3xl border border-rose-100">
+                        <p class="text-[9px] font-black text-rose-400 uppercase tracking-widest mb-1">สถานะเช่า</p>
+                        <p class="text-base font-black text-rose-600 leading-none">฿5,850</p>
+                    </div>
+                    <div class="bg-amber-50 p-4 rounded-3xl border border-amber-100">
+                        <p class="text-[9px] font-black text-amber-400 uppercase tracking-widest mb-1">สถานะซ่อม</p>
+                        <p class="text-base font-black text-amber-500 leading-none">รออนุมัติ</p>
+                    </div>
+                </div>
+
+                <!-- หลอดพลังงานสัญญา (Power Bar) -->
+                <div class="space-y-1">
+                    <div class="power-bar-container">
+                        <div class="power-bar-fill power-bar-glow bg-gradient-to-r from-indigo-600 to-indigo-400" style="width: 50%"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-tighter mt-1 px-1">
+                        <span>เริ่ม 01/07/68</span>
+                        <span>จบ 30/06/69</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- การ์ดที่ 2: สถานะปกติ -->
+            <div onclick="openActionSheet('หอพักป้าสมร', '102', 'ปกติ', '฿0', 'ไม่มี')" class="active-press bg-white rounded-[40px] p-6 shadow-sm border border-white transition-all">
+                <div class="flex gap-4 mb-5">
+                    <div class="w-14 h-14 rounded-[20px] overflow-hidden flex-shrink-0 shadow-sm">
+                        <img src="https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?q=80&w=2070&auto=format&fit=crop" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-slate-800 text-lg">หอพักป้าสมร</h3>
+                        <p class="text-indigo-600 font-black text-xs uppercase tracking-widest">ห้อง 102</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <div class="bg-slate-50 p-4 rounded-3xl border border-slate-100">
+                        <p class="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">สถานะเช่า</p>
+                        <p class="text-base font-black text-emerald-500 leading-none">ปกติ ฿0</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-3xl border border-slate-100">
+                        <p class="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">สถานะซ่อม</p>
+                        <p class="text-base font-black text-slate-300 italic leading-none">ไม่มีรายการ</p>
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <div class="power-bar-container">
+                        <div class="power-bar-fill bg-emerald-500" style="width: 90%"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-tighter mt-1 px-1">
+                        <span>เริ่ม 01/01/68</span>
+                        <span>จบ 31/12/68</span>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Bottom Navigation (เดิม) -->
+        <nav class="fixed bottom-0 w-full bg-white border-t border-slate-100 z-40 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.03)] rounded-t-[30px]">
+            <div class="grid grid-cols-4 h-16 items-center">
+                <a href="#" class="flex flex-col items-center justify-center text-slate-300"><i class="fa-solid fa-city text-lg mb-1"></i><span class="text-[9px] font-bold uppercase tracking-widest">หอพัก</span></a>
+                <a href="#" class="flex flex-col items-center justify-center text-slate-300"><i class="fa-solid fa-calendar-check text-lg mb-1"></i><span class="text-[9px] font-bold uppercase tracking-widest">การจอง</span></a>
+                <a href="#" class="flex flex-col items-center justify-center text-blue-600"><i class="fa-solid fa-house-user text-lg mb-1"></i><span class="text-[9px] font-black uppercase tracking-widest">หอของฉัน</span></a>
+                <a href="#" class="flex flex-col items-center justify-center text-slate-300"><i class="fa-solid fa-user-circle text-lg mb-1"></i><span class="text-[9px] font-bold uppercase tracking-widest">โปรไฟล์</span></a>
+            </div>
+        </nav>
+    </div>
+
+
+    <!-- ========================================================= -->
+    <!-- OVERLAYS: ACTION SHEET -->
+    <!-- ========================================================= -->
+    <div id="actionMask" class="mask fixed inset-0 bg-slate-900/40 z-50 backdrop-blur-[3px]" onclick="closeActionSheet()"></div>
+    <div id="actionSheet" class="bottom-sheet fixed bottom-0 left-0 w-full bg-white z-[60] rounded-t-[50px] shadow-2xl overflow-hidden">
+        <div class="w-16 h-1.5 bg-slate-100 rounded-full mx-auto mt-5 mb-2"></div>
+        <div class="p-8">
+            <div class="mb-8">
+                <h2 id="sh-name" class="text-2xl font-black text-slate-800 tracking-tight text-center">Dorm Name</h2>
+                <p id="sh-room" class="text-indigo-600 font-black tracking-[0.2em] text-xs uppercase text-center mt-1">ห้อง XXX</p>
+            </div>
+            
+            <div class="space-y-4">
+                <button onclick="alert('ไปยังหน้าการเงิน'); closeActionSheet();" class="w-full flex items-center p-5 bg-slate-50 rounded-[30px] active:scale-[0.98] transition">
+                    <div class="w-12 h-12 bg-indigo-600 text-white rounded-2xl flex items-center justify-center mr-4 shadow-lg shadow-indigo-100"><i class="fa-solid fa-wallet"></i></div>
+                    <div class="text-left"><span class="block text-sm font-bold text-slate-800 tracking-tight">1. ชำระค่าเช่า & บิลค่าน้ำไฟ</span><span id="sh-bill" class="text-[10px] text-rose-500 font-black uppercase">ค้าง: ฿0</span></div>
+                    <i class="fa-solid fa-chevron-right text-slate-300 ml-auto text-xs"></i>
+                </button>
+                
+                <button onclick="alert('ไปยังหน้าแจ้งซ่อม'); closeActionSheet();" class="w-full flex items-center p-5 bg-slate-50 rounded-[30px] active:scale-[0.98] transition">
+                    <div class="w-12 h-12 bg-amber-500 text-white rounded-2xl flex items-center justify-center mr-4 shadow-lg shadow-amber-100"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                    <div class="text-left"><span class="block text-sm font-bold text-slate-800 tracking-tight">2. บริการแจ้งซ่อมบำรุง</span><span id="sh-repair" class="text-[10px] text-amber-500 font-black uppercase">สถานะ: รออนุมัติ</span></div>
+                    <i class="fa-solid fa-chevron-right text-slate-300 ml-auto text-xs"></i>
+                </button>
+
+                <button onclick="alert('ดูสัญญา'); closeActionSheet();" class="w-full flex items-center p-5 bg-slate-50 rounded-[30px] active:scale-[0.98] transition">
+                    <div class="w-12 h-12 bg-slate-800 text-white rounded-2xl flex items-center justify-center mr-4 shadow-lg shadow-slate-100"><i class="fa-solid fa-file-signature"></i></div>
+                    <div class="text-left"><span class="block text-sm font-bold text-slate-800 tracking-tight">3. ข้อมูลสัญญาเช่าหอพัก</span><span class="text-[10px] text-slate-400 font-black uppercase">ตรวจสอบระยะเวลาสัญญา</span></div>
+                    <i class="fa-solid fa-chevron-right text-slate-300 ml-auto text-xs"></i>
+                </button>
+            </div>
+
+            <div class="mt-8">
+                <button onclick="closeActionSheet()" class="w-full py-4 text-slate-300 font-bold text-xs uppercase tracking-widest text-center">ปิดหน้าต่าง</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- JAVASCRIPT -->
+    <script>
+        const sheet = document.getElementById('actionSheet');
+        const mask = document.getElementById('actionMask');
+
+        function openActionSheet(name, room, status, bill, repair) {
+            document.getElementById('sh-name').innerText = name;
+            document.getElementById('sh-room').innerText = "ห้อง " + room;
+            document.getElementById('sh-bill').innerText = "ค้าง: " + bill;
+            document.getElementById('sh-repair').innerText = "สถานะ: " + repair;
+
+            sheet.classList.add('active');
+            mask.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeActionSheet() {
+            sheet.classList.remove('active');
+            mask.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+    </script>
+
+</body>
+</html>

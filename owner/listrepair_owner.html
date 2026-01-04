@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>รายการแจ้งซ่อม (ห้อง 102) - เจ้าของหอ</title>
+    
+    <!-- Google Fonts: Kanit -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { 
+            font-family: 'Kanit', sans-serif; 
+            background-color: #f4f5f7;
+            -webkit-tap-highlight-color: transparent; 
+            padding-bottom: 75px; 
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Custom Colors for 5 Statuses */
+        .status-text-New { color: #f97316; } /* แจ้งซ่อม (ส้ม) */
+        .status-text-Cancelled { color: #6b7280; } /* ยกเลิก (เทา) */
+        .status-text-FindingTech { color: #facc15; } /* หาช่าง (เหลือง) */
+        .status-text-InProgress { color: #3b82f6; } /* กำลังซ่อม (น้ำเงิน) */
+        .status-text-Resolved { color: #10b981; } /* ซ่อมเสร็จแล้ว (เขียว) */
+        
+        /* Animation & Mask */
+        .bottom-sheet { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateY(100%); }
+        .bottom-sheet.active { transform: translateY(0); }
+        .mask { transition: opacity 0.3s; opacity: 0; pointer-events: none; }
+        .mask.active { opacity: 1; pointer-events: auto; }
+    </style>
+</head>
+<body class="relative"> 
+
+<!-- 1. Header (แสดงเลขห้อง) -->
+<header class="py-6 px-4">
+    <div class="flex items-center gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">รายการแจ้งซ่อม <span class="text-blue-600">ห้อง 102</span></h1>
+            <p class="text-sm text-gray-500 mt-1">งานซ่อม 4 รายการ (แจ้งซ่อม 2, หาช่าง 1, กำลังซ่อม 1, เสร็จแล้ว 1)</p>
+        </div>
+    </div>
+</header>
+
+<main class="px-4 space-y-4">
+
+    <!-- รายการแจ้งซ่อมทั้งหมด -->
+    <h2 class="text-lg font-bold text-gray-800 pt-3">งานซ่อมในห้องทั้งหมด</h2>
+
+    <!-- Card 1: IN PROGRESS (งานไฟ) - ผู้แจ้ง: เจ้าของหอ -->
+    <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-blue-500 active:scale-[0.99] transition-transform relative" onclick="openDetailActionSheet('กำลังซ่อม', 'เจ้าของหอ', 'งานไฟ', '3500', 'ไฟฟ้าในห้องดับทั้งหมด/มีกลิ่นไหม้', false)">
+        <!-- สถานะ (มุมซ้ายบน) -->
+        <div class="absolute top-4 left-4 status-text-InProgress rounded-lg px-2 py-0.5 text-xs font-bold">
+            กำลังซ่อม
+        </div>
+        <!-- วันที่แจ้ง (มุมขวาบน) -->
+        <div class="absolute top-4 right-4 text-xs text-gray-500">
+            <i class="fa-regular fa-calendar-alt mr-1"></i> 10/12/2568
+        </div>
+        
+        <div class="pt-8">
+            <p class="text-xl font-bold text-gray-800 leading-tight">งานซ่อม</p> 
+            <p class="text-sm text-gray-600 mt-1 flex items-center gap-1"><i class="fa-solid fa-bolt text-gray-600"></i> งานไฟ</p>
+            <div class="mt-2 border-t border-gray-100 pt-2">
+                <p class="text-sm text-gray-600 mt-1">ค่าซ่อม: <span class="font-bold text-gray-800">3,500 บาท</span></p>
+                <p class="text-sm text-gray-600 mt-1">รายละเอียด: ไฟฟ้าในห้องดับทั้งหมด/มีกลิ่นไหม้</p>
+                <p class="text-xs text-gray-500 mt-2 font-medium"><i class="fa-solid fa-user-tie mr-1"></i> เจ้าของหอแจ้ง</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 2: NEW REPORT (งานประปา) - ผู้แจ้ง: ผู้เช่า (ต้องอนุมัติ) -->
+    <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-orange-600 active:scale-[0.99] transition-transform relative" onclick="openDetailActionSheet('แจ้งซ่อม', 'ผู้เช่า', 'งานประปา', '0', 'ท่อน้ำในห้องน้ำรั่วซึม', true)">
+        <!-- สถานะ (มุมซ้ายบน) -->
+        <div class="absolute top-4 left-4 status-text-New rounded-lg px-2 py-0.5 text-xs font-bold">
+            แจ้งซ่อม
+        </div>
+        <!-- วันที่แจ้ง (มุมขวาบน) -->
+        <div class="absolute top-4 right-4 text-xs text-gray-500">
+            <i class="fa-regular fa-calendar-alt mr-1"></i> 12/12/2568
+        </div>
+
+        <div class="pt-8">
+            <p class="text-xl font-bold text-gray-800 leading-tight">งานซ่อม</p>
+            <p class="text-sm text-gray-600 mt-1 flex items-center gap-1"><i class="fa-solid fa-faucet-drip text-gray-600"></i> งานประปา</p>
+            <div class="mt-2 border-t border-gray-100 pt-2">
+                <!-- งบประมาณ (แสดงข้อความว่ารอนำเสนอราคา) -->
+                <p class="text-sm text-gray-600 mt-1">งบประมาณ: <span class="font-bold text-red-600">รอนำเสนอราคา</span></p>
+                <p class="text-sm text-gray-600 mt-1">รายละเอียด: ท่อน้ำในห้องน้ำรั่วซึม</p>
+                <p class="text-xs text-red-500 mt-2 font-medium"><i class="fa-solid fa-user mr-1"></i> ผู้เช่าแจ้ง</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 3: FINDING TECH (งานโครงสร้าง) - ผู้แจ้ง: เจ้าของหอ (อนุมัติแล้ว/พร้อมเริ่มงาน) -->
+    <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-yellow-400 active:scale-[0.99] transition-transform relative" onclick="openDetailActionSheet('หาช่าง', 'เจ้าของหอ', 'งานโครงสร้าง', '600', 'ลูกบิดประตูตู้เสื้อผ้าหลุด')">
+        <!-- สถานะ (มุมซ้ายบน) -->
+        <div class="absolute top-4 left-4 status-text-FindingTech rounded-lg px-2 py-0.5 text-xs font-bold">
+            หาช่าง
+        </div>
+        <!-- วันที่แจ้ง (มุมขวาบน) -->
+        <div class="absolute top-4 right-4 text-xs text-gray-500">
+            <i class="fa-regular fa-calendar-alt mr-1"></i> 01/12/2568
+        </div>
+
+        <div class="pt-8">
+            <p class="text-xl font-bold text-gray-800 leading-tight">งานซ่อม</p>
+            <p class="text-sm text-gray-600 mt-1 flex items-center gap-1"><i class="fa-solid fa-house-crack text-gray-600"></i> งานโครงสร้าง</p>
+            <div class="mt-2 border-t border-gray-100 pt-2">
+                <p class="text-sm text-gray-600 mt-1">งบประมาณ: <span class="font-bold text-gray-800">600 บาท</span></p>
+                <p class="text-sm text-gray-600 mt-1">รายละเอียด: ลูกบิดประตูตู้เสื้อผ้าหลุด</p>
+                <p class="text-xs text-gray-500 mt-2 font-medium"><i class="fa-solid fa-user-tie mr-1"></i> เจ้าของหอแจ้ง</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Card 4: RESOLVED (งานไฟ) - ผู้แจ้ง: เจ้าของหอ -->
+    <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-green-600 active:scale-[0.99] transition-transform relative" onclick="openDetailActionSheet('ซ่อมเสร็จแล้ว', 'เจ้าของหอ', 'งานไฟ', '150', 'เปลี่ยนหลอดไฟห้องน้ำ')">
+        <!-- สถานะ (มุมซ้ายบน) -->
+        <div class="absolute top-4 left-4 status-text-Resolved rounded-lg px-2 py-0.5 text-xs font-bold">
+            ซ่อมเสร็จแล้ว
+        </div>
+        <!-- วันที่แจ้ง (มุมขวาบน) -->
+        <div class="absolute top-4 right-4 text-xs text-gray-500">
+            <i class="fa-regular fa-calendar-alt mr-1"></i> 28/11/2568
+        </div>
+
+        <div class="pt-8">
+            <p class="text-xl font-bold text-gray-800 leading-tight">งานซ่อม</p>
+            <p class="text-sm text-gray-600 mt-1 flex items-center gap-1"><i class="fa-solid fa-bolt text-gray-600"></i> งานไฟ</p>
+            <div class="mt-2 border-t border-gray-100 pt-2">
+                <p class="text-sm text-gray-600 mt-1">ค่าใช้จ่ายจริง: <span class="font-bold text-gray-800">150 บาท</span></p>
+                <p class="text-sm text-gray-600 mt-1">รายละเอียด: เปลี่ยนหลอดไฟห้องน้ำ</p>
+                <p class="text-xs text-gray-500 mt-2 font-medium"><i class="fa-solid fa-user-tie mr-1"></i> เจ้าของหอแจ้ง</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="h-8"></div>
+    
+</main>
+
+<!-- MASK Overlay -->
+<div id="commonMask" class="mask fixed inset-0 bg-black/60 z-50 backdrop-blur-[2px]" onclick="closeAllSheets()"></div>
+
+<!-- FILTER SHEET (ใช้ได้เหมือนเดิม) -->
+<!-- ... โค้ดส่วน FILTER SHEET ยังคงเหมือนเดิม ... -->
+<div id="filterSheet" class="bottom-sheet fixed bottom-0 left-0 w-full bg-white z-[60] rounded-t-[32px] shadow-2xl flex flex-col max-h-[85vh]">
+    <div class="flex justify-between items-center px-6 pt-5 pb-2">
+        <h2 class="text-lg font-bold text-gray-800">ตัวกรองงานซ่อม</h2>
+        <button onclick="closeAllSheets()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+<div class="flex-1 overflow-y-auto px-6 py-4 space-y-6">
+    <!-- 1. Repair Status Filter -->
+    <div>
+        <label class="text-sm font-semibold text-gray-700 mb-3 block">สถานะงานซ่อม</label>
+        <div class="flex flex-wrap gap-2">
+            <label class="cursor-pointer py-2 px-3 rounded-xl border border-gray-200 text-gray-600 text-xs text-center has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50 has-[:checked]:text-orange-700 font-medium"><input type="checkbox" class="hidden"><i class="fa-solid fa-clock"></i> แจ้งซ่อม</label>
+            <label class="cursor-pointer py-2 px-3 rounded-xl border border-gray-200 text-gray-600 text-xs text-center has-[:checked]:border-yellow-500 has-[:checked]:bg-yellow-50 has-[:checked]:text-yellow-700 font-medium"><input type="checkbox" class="hidden"><i class="fa-solid fa-search"></i> หาช่าง</label>
+            <label class="cursor-pointer py-2 px-3 rounded-xl border border-gray-200 text-gray-600 text-xs text-center has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 has-[:checked]:text-blue-700 font-medium"><input type="checkbox" class="hidden"><i class="fa-solid fa-screwdriver-wrench"></i> กำลังซ่อม</label>
+            <label class="cursor-pointer flex-1 py-2 rounded-xl border border-gray-200 text-gray-600 text-xs text-center has-[:checked]:border-green-500 has-[:checked]:bg-green-50 has-[:checked]:text-green-700 font-medium"><input type="checkbox" class="hidden"><i class="fa-solid fa-check"></i> เสร็จแล้ว</label>
+            <label class="cursor-pointer flex-1 py-2 rounded-xl border border-gray-200 text-gray-600 text-xs text-center has-[:checked]:border-gray-500 has-[:checked]:bg-gray-200 has-[:checked]:text-gray-700 font-medium"><input type="checkbox" class="hidden"><i class="fa-solid fa-ban"></i> ยกเลิก</label>
+        </div>
+    </div>
+    
+    <!-- 2. Repair Type Filter -->
+    <div>
+        <label class="text-sm font-semibold text-gray-700 mb-3 block">ประเภทงานซ่อม</label>
+        <div class="flex flex-wrap gap-2">
+            <label class="cursor-pointer flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200 has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 has-[:checked]:text-blue-600"><input type="checkbox" class="hidden"><i class="fa-solid fa-bolt"></i> <span class="text-xs">งานไฟ</span></label>
+            <label class="cursor-pointer flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200 has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 has-[:checked]:text-blue-600"><input type="checkbox" class="hidden"><i class="fa-solid fa-faucet-drip"></i> <span class="text-xs">งานประปา</span></label>
+            <label class="cursor-pointer flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200 has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 has-[:checked]:text-blue-600"><input type="checkbox" class="hidden"><i class="fa-regular fa-snowflake"></i> <span class="text-xs">งานแอร์</span></label>
+            <label class="cursor-pointer flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200 has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 has-[:checked]:text-blue-600"><input type="checkbox" class="hidden"><i class="fa-solid fa-house-crack"></i> <span class="text-xs">งานโครงสร้าง</span></label>
+        </div>
+    </div>
+
+    <!-- 3. Reported By Filter -->
+    <div>
+        <label class="text-sm font-semibold text-gray-700 mb-3 block">ผู้แจ้งรายการ</label>
+        <div class="flex gap-2">
+            <label class="cursor-pointer flex-1 py-2 rounded-xl border border-gray-200 text-gray-600 text-xs text-center has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 has-[:checked]:text-blue-600 font-medium"><input type="checkbox" class="hidden"><i class="fa-solid fa-user-tie"></i> เจ้าของหอ</label>
+            <label class="cursor-pointer flex-1 py-2 rounded-xl border border-gray-200 text-gray-600 text-xs text-center has-[:checked]:border-red-500 has-[:checked]:bg-red-50 has-[:checked]:text-red-600 font-medium"><input type="checkbox" class="hidden"><i class="fa-solid fa-user"></i> ผู้เช่า</label>
+        </div>
+    </div>
+    
+    <!-- 4. Budget/Price Range -->
+    <div>
+        <label class="text-sm font-semibold text-gray-700 mb-3 block">ช่วงราคา/งบประมาณ</label>
+        <div class="flex gap-2">
+            <button class="flex-1 py-2 rounded-xl border-2 border-blue-600 bg-blue-50 text-blue-600 text-xs font-bold">ทุกราคา</button>
+            <button class="flex-1 py-2 rounded-xl border border-gray-200 text-gray-600 text-xs hover:border-blue-300"> < 1,000 บาท</button>
+            <button class="flex-1 py-2 rounded-xl border border-gray-200 text-gray-600 text-xs hover:border-blue-300"> > 3,000 บาท</button>
+        </div>
+    </div>
+</div>
+<div class="p-4 border-t border-gray-100 pb-8">
+    <button onclick="closeAllSheets()" class="w-full bg-gray-900 text-white font-bold py-3.5 rounded-2xl shadow-lg active:scale-95 transition">ค้นหา 4 รายการ</button>
+</div>
+</div>
+
+
+<!-- REPORT ISSUE SHEET (สำหรับเจ้าของหอ - ลบส่วนที่ไม่ต้องการ) -->
+
+<div id="reportIssueSheet" class="bottom-sheet fixed bottom-0 left-0 w-full bg-white z-[60] rounded-t-[32px] shadow-2xl flex flex-col max-h-[90vh]">
+    <div class="flex justify-between items-center px-6 pt-5 pb-2 border-b border-gray-100">
+        <h2 class="text-lg font-bold text-gray-800">แจ้งซ่อม/บันทึกงานใหม่ <span class="text-blue-600">(ห้อง 102)</span></h2>
+        <button onclick="closeAllSheets()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+        
+        <!-- Room Info (แสดงผลว่ากำลังแจ้งซ่อมห้องไหน) -->
+        <div class="p-3 bg-blue-50 rounded-xl border border-blue-200">
+            <label class="text-sm font-semibold text-gray-700 block">งานซ่อมสำหรับ: ห้อง 102</label>
+            <p class="text-xs text-gray-500">กรอกรายละเอียดงานซ่อมที่พบในห้องนี้</p>
+        </div>
+        
+        <!-- Repair Type -->
+        <div>
+             <label class="text-sm font-semibold text-gray-700 mb-2 block">1. ประเภทงานซ่อมหลัก</label>
+             <div class="grid grid-cols-2 gap-3">
+                 <label class="cursor-pointer flex items-center gap-2 p-3 bg-gray-50 rounded-xl border border-gray-200 has-[:checked]:bg-red-50 has-[:checked]:border-red-500 has-[:checked]:text-red-600"><input type="radio" name="repairType" class="hidden"><i class="fa-solid fa-bolt"></i> <span class="text-sm font-medium">งานไฟ</span></label>
+                 <label class="cursor-pointer flex items-center gap-2 p-3 bg-gray-50 rounded-xl border border-gray-200 has-[:checked]:bg-red-50 has-[:checked]:border-red-500 has-[:checked]:text-red-600"><input type="radio" name="repairType" class="hidden" checked><i class="fa-solid fa-faucet-drip"></i> <span class="text-sm font-medium">งานประปา</span></label>
+                 <label class="cursor-pointer flex items-center gap-2 p-3 bg-gray-50 rounded-xl border border-gray-200 has-[:checked]:bg-red-50 has-[:checked]:border-red-500 has-[:checked]:text-red-600"><input type="radio" name="repairType" class="hidden"><i class="fa-regular fa-snowflake"></i> <span class="text-sm font-medium">งานแอร์</span></label>
+                 <label class="cursor-pointer flex items-center gap-2 p-3 bg-gray-50 rounded-xl border border-gray-200 has-[:checked]:bg-red-50 has-[:checked]:border-red-500 has-[:checked]:text-red-600"><input type="radio" name="repairType" class="hidden"><i class="fa-solid fa-house-crack"></i> <span class="text-sm font-medium">งานโครงสร้าง</span></label>
+             </div>
+        </div>
+
+        <!-- Issue Details -->
+        <div>
+            <label for="issueDetail" class="text-sm font-semibold text-gray-700 mb-2 block">2. รายละเอียดอาการ/ความเสียหาย</label>
+            <textarea id="issueDetail" rows="3" class="w-full p-3 border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-blue-500 text-sm text-gray-700" placeholder="เช่น ท่อน้ำอุดตันในอ่างล้างหน้า"></textarea>
+        </div>
+        
+        <!-- Budget/Cost Estimation -->
+        <div>
+            <label for="estimatedCost" class="text-sm font-semibold text-gray-700 mb-2 block">3. งบประมาณ / ค่าซ่อมเสนอ (บาท)</label>
+            <div class="relative">
+                <input type="number" id="estimatedCost" class="w-full p-3 pr-12 border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-blue-500 text-lg font-bold text-gray-800 text-right" placeholder="0">
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">บาท</span>
+            </div>
+        </div>
+        
+    </div>
+    <div class="p-4 border-t border-gray-100 pb-8">
+        <button onclick="closeAllSheets()" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl shadow-lg active:scale-95 transition">บันทึกงานซ่อมใหม่</button>
+    </div>
+</div>
+
+
+<!-- DETAIL/ACTION SHEET (New Sheet for Viewing/Updating Status/Approval) -->
+<div id="detailActionSheet" class="bottom-sheet fixed bottom-0 left-0 w-full bg-white z-[60] rounded-t-[32px] shadow-2xl flex flex-col max-h-[90vh]">
+    <div class="flex justify-between items-center px-6 pt-5 pb-2 border-b border-gray-100">
+        <h2 class="text-lg font-bold text-gray-800">รายละเอียดงานซ่อม <span class="text-blue-600">ห้อง 102</span></h2>
+        <button onclick="closeAllSheets()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+        <!-- Status Display Area (Dynamic Content) -->
+        <div>
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">สถานะปัจจุบัน:</h3>
+            <div id="currentStatusDisplay" class="text-xl font-bold status-text-InProgress">กำลังซ่อม</div>
+             <div id="approvalStatusTag" class="hidden mt-2 px-3 py-1 bg-red-100 text-red-700 rounded-lg text-sm font-bold flex items-center gap-1">
+                <i class="fa-solid fa-hand-point-up"></i> รายการจากผู้เช่า (ต้องตีงบและอนุมัติ)
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 border-t border-gray-100 pt-4">
+             <!-- Work Type -->
+            <div>
+                <h3 class="text-sm font-semibold text-gray-700">ประเภทงาน</h3>
+                <p id="detailWorkType" class="text-md text-gray-800 mt-1 flex items-center gap-1"><i class="fa-solid fa-bolt"></i> งานไฟ</p>
+            </div>
+            <!-- Reported By -->
+             <div>
+                <h3 class="text-sm font-semibold text-gray-700">ผู้แจ้งรายการ</h3>
+                <p id="detailReportedBy" class="text-md text-gray-800 mt-1 flex items-center gap-1"><i class="fa-solid fa-user-tie"></i> เจ้าของหอ</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 border-t border-gray-100 pt-4">
+            <!-- Cost (Dynamic visibility) -->
+            <div id="detailCostBlock">
+                <h3 class="text-sm font-semibold text-gray-700">งบประมาณ/ค่าใช้จ่าย</h3>
+                <p id="detailCost" class="text-md font-bold text-gray-800 mt-1">3,500 บาท</p>
+            </div>
+            <!-- Date -->
+            <div>
+                <h3 class="text-sm font-semibold text-gray-700">วันที่แจ้ง</h3>
+                <p class="text-md text-gray-800 mt-1">10/12/2568</p>
+            </div>
+        </div>
+
+        <!-- Issue Details -->
+        <div class="border-t border-gray-100 pt-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">รายละเอียดอาการ/ความเสียหาย:</h3>
+            <p id="detailDescription" class="text-md text-gray-800">ไฟฟ้าในห้องดับทั้งหมด/มีกลิ่นไหม้</p>
+        </div>
+        
+    </div>
+    
+    <!-- Action Buttons Area -->
+    <div class="p-4 border-t border-gray-100 pb-8 space-y-3">
+        
+        <!-- 1. Approval/Decision Buttons (แสดงเมื่อเป็นงาน 'แจ้งซ่อม' จากผู้เช่า) -->
+        <div id="approvalButtons" class="hidden grid grid-cols-2 gap-3">
+             <button onclick="updateStatus('ยกเลิก')" class="w-full bg-gray-500 text-white font-bold py-3.5 rounded-2xl shadow-lg active:scale-95 transition">
+                <i class="fa-solid fa-ban mr-2"></i> ยกเลิกแจ้งซ่อม
+            </button>
+             <button onclick="openBudgetInputSheet()" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl shadow-lg active:scale-95 transition">
+                <i class="fa-solid fa-search-dollar mr-2"></i> หาช่าง/ตีงบ
+            </button>
+        </div>
+        
+        <!-- 2. Status Update (แสดงเมื่องานผ่านการอนุมัติแล้ว หรือเป็นงานที่เจ้าของหอแจ้งเอง) -->
+        <div id="statusUpdateForm" class="space-y-3">
+            <h4 class="text-sm font-semibold text-gray-700">อัปเดตสถานะ:</h4>
+            <div class="grid grid-cols-3 gap-2">
+                <button onclick="updateStatus('แจ้งซ่อม')" class="py-3 rounded-xl border border-gray-200 text-gray-600 text-xs text-center hover:bg-orange-50 active:scale-95 transition">แจ้งซ่อม</button>
+                <button onclick="updateStatus('หาช่าง')" class="py-3 rounded-xl border border-gray-200 text-gray-600 text-xs text-center hover:bg-yellow-50 active:scale-95 transition">หาช่าง</button>
+                <button onclick="updateStatus('กำลังซ่อม')" class="py-3 rounded-xl border border-gray-200 text-gray-600 text-xs text-center hover:bg-blue-50 active:scale-95 transition">กำลังซ่อม</button>
+                <button onclick="updateStatus('ซ่อมเสร็จแล้ว')" class="py-3 rounded-xl border border-gray-200 text-gray-600 text-xs text-center hover:bg-green-50 active:scale-95 transition">ซ่อมเสร็จแล้ว</button>
+                <button onclick="updateStatus('ยกเลิก')" class="py-3 rounded-xl border border-gray-200 text-gray-600 text-xs text-center hover:bg-gray-50 active:scale-95 transition">ยกเลิก</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- BUDGET INPUT SHEET (New Sheet for Tying Budget and Moving to FindingTech) -->
+<div id="budgetInputSheet" class="bottom-sheet fixed bottom-0 left-0 w-full bg-white z-[65] rounded-t-[32px] shadow-2xl flex flex-col max-h-[50vh]">
+    <div class="flex justify-between items-center px-6 pt-5 pb-2 border-b border-gray-100">
+        <h2 class="text-lg font-bold text-gray-800">กำหนดงบประมาณ (หาช่าง)</h2>
+        <button onclick="closeAllSheets()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+        <p class="text-sm text-gray-600">กรุณากำหนดงบประมาณที่อนุมัติสำหรับงานซ่อมนี้ ก่อนเปลี่ยนสถานะเป็น "หาช่าง"</p>
+        
+        <!-- Budget/Cost Estimation -->
+        <div>
+            <label for="budgetAmount" class="text-sm font-semibold text-gray-700 mb-2 block">งบประมาณที่อนุมัติ (บาท)</label>
+            <div class="relative">
+                <input type="number" id="budgetAmount" class="w-full p-3 pr-12 border-2 border-blue-500 rounded-xl focus:ring-blue-500 text-xl font-bold text-gray-800 text-right" placeholder="0">
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">บาท</span>
+            </div>
+        </div>
+
+    </div>
+    <div class="p-4 border-t border-gray-100 pb-8">
+        <button onclick="finalizeBudgetAndMoveToFindingTech()" class="w-full bg-yellow-600 text-white font-bold py-3.5 rounded-2xl shadow-lg active:scale-95 transition">อนุมัติและเปลี่ยนเป็น 'หาช่าง'</button>
+    </div>
+</div>
+
+
+<!-- 4. Floating Action Buttons (FABs) -->
+<div class="fixed bottom-24 right-4 z-30 flex flex-col items-end space-y-3">
+    <!-- Filter/Sort Button -->
+    <button onclick="openFilterSheet()" class="w-12 h-12 rounded-full bg-gray-500 text-white shadow-xl flex items-center justify-center active:scale-95 transition">
+        <i class="fa-solid fa-sliders text-lg"></i>
+    </button>
+    <!-- Main Action Button (Add New Report) -->
+    <button onclick="openReportIssueSheet()" class="w-14 h-14 rounded-full bg-blue-600 text-white shadow-2xl shadow-blue-400 flex items-center justify-center active:scale-95 transition">
+        <i class="fa-solid fa-pen-to-square text-xl"></i>
+    </button>
+</div>
+
+
+<!-- 5. Bottom Navigation Bar (Tab Bar) -->
+<nav class="fixed bottom-0 left-0 right-0 h-16 bg-white/95 backdrop-blur-md border-t border-gray-100 shadow-[0_-5px_10px_-5px_rgba(0,0,0,0.05)] z-50">
+    <div class="flex h-full items-center justify-around">
+        <!-- Tab 1: รายงานผล (Dashboard/Reports) -->
+        <a href="#" class="flex flex-col items-center justify-center text-gray-500 hover:text-blue-600 transition">
+            <i class="fa-solid fa-chart-pie text-xl"></i>
+            <span class="text-[10px] mt-1">รายงานผล</span>
+        </a>
+        <!-- Tab 2: รายการแจ้งซ่อม (ACTIVE) -->
+        <a href="#" class="flex flex-col items-center justify-center text-blue-600">
+            <i class="fa-solid fa-house text-xl"></i>
+            <span class="text-[10px] mt-1 font-semibold">รายการซ่อม</span>
+        </a>
+        <!-- Tab 3: โปรไฟล์ (Profile/Settings) -->
+        <a href="#" class="flex flex-col items-center justify-center text-gray-500 hover:text-blue-600 transition">
+            <i class="fa-solid fa-user text-xl"></i>
+            <span class="text-[10px] mt-1">ผู้เช่า/โปรไฟล์</span>
+        </a>
+    </div>
+</nav>
+
+<!-- JAVASCRIPT LOGIC -->
+<script>
+    const filterSheet = document.getElementById('filterSheet');
+    const reportIssueSheet = document.getElementById('reportIssueSheet');
+    const detailActionSheet = document.getElementById('detailActionSheet'); 
+    const budgetInputSheet = document.getElementById('budgetInputSheet'); // New Sheet
+    const mask = document.getElementById('commonMask');
+    
+    // Global variable to store current job details for status update continuity
+    let currentJobDetails = {}; 
+
+    // Utility to close all sheets
+    function closeAllSheets() { 
+        filterSheet.classList.remove('active'); 
+        reportIssueSheet.classList.remove('active');
+        detailActionSheet.classList.remove('active'); 
+        budgetInputSheet.classList.remove('active'); // Close new sheet
+        mask.classList.remove('active'); 
+        document.body.style.overflow = 'auto'; 
+    }
+    
+    // Open Filter Sheet
+    function openFilterSheet() { 
+        closeAllSheets(); 
+        filterSheet.classList.add('active'); 
+        mask.classList.add('active'); 
+        document.body.style.overflow = 'hidden'; 
+    }
+    
+    // Open Report Issue Sheet
+    function openReportIssueSheet() {
+        closeAllSheets();
+        reportIssueSheet.classList.add('active');
+        mask.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    // Open Budget Input Sheet
+    function openBudgetInputSheet() {
+        // ต้องปิด Detail Sheet ก่อนเปิด Budget Sheet
+        detailActionSheet.classList.remove('active');
+        budgetInputSheet.classList.add('active');
+        // Mask ยังคงอยู่
+    }
+
+    // Finalize Budget and Move to FindingTech
+    function finalizeBudgetAndMoveToFindingTech() {
+        const budget = document.getElementById('budgetAmount').value;
+        if (!budget || parseFloat(budget) <= 0) {
+            alert('กรุณากรอกงบประมาณที่อนุมัติเป็นตัวเลขที่มากกว่าศูนย์');
+            return;
+        }
+
+        alert(`จำลอง: อนุมัติงบประมาณ ${budget} บาท และเปลี่ยนสถานะเป็น 'หาช่าง' แล้ว`);
+        closeAllSheets();
+        // ในระบบจริง: Update Database (cost, status='หาช่าง') และ Reload รายการ
+    }
+
+
+    // Open Detail/Action Sheet (Main Logic for List Item Click)
+    function openDetailActionSheet(status, reporter, workType, cost, description, requiresApproval = false) {
+        closeAllSheets();
+        
+        // Store current job details (Mockup)
+        currentJobDetails = { status, reporter, workType, cost, description, requiresApproval };
+        
+        // --- 1. Update Detail Sheet Content (Data Injection) ---
+        const statusMap = {
+            'แจ้งซ่อม': { display: 'แจ้งซ่อม', class: 'status-text-New' },
+            'ยกเลิก': { display: 'ยกเลิก', class: 'status-text-Cancelled' },
+            'หาช่าง': { display: 'หาช่าง', class: 'status-text-FindingTech' },
+            'กำลังซ่อม': { display: 'กำลังซ่อม', class: 'status-text-InProgress' },
+            'ซ่อมเสร็จแล้ว': { display: 'ซ่อมเสร็จแล้ว', class: 'status-text-Resolved' },
+        };
+        
+        // Set Data
+        document.getElementById('detailWorkType').innerHTML = `
+            ${workType === 'งานไฟ' ? '<i class="fa-solid fa-bolt"></i>' : 
+            workType === 'งานประปา' ? '<i class="fa-solid fa-faucet-drip"></i>' :
+            workType === 'งานเครื่องปรับอากาศ' ? '<i class="fa-regular fa-snowflake"></i>' :
+            '<i class="fa-solid fa-house-crack"></i>'} ${workType}
+        `;
+        document.getElementById('detailReportedBy').innerHTML = `
+            ${reporter === 'เจ้าของหอ' ? '<i class="fa-solid fa-user-tie"></i> เจ้าของหอ' : '<i class="fa-solid fa-user"></i> ผู้เช่า'}
+        `;
+        document.getElementById('detailDescription').innerText = description;
+        
+        // Update Current Status and Color
+        const statusDisplay = document.getElementById('currentStatusDisplay');
+        statusDisplay.innerText = statusMap[status]?.display || status;
+        statusDisplay.className = `text-xl font-bold ${statusMap[status]?.class || 'status-text-New'}`;
+
+        // --- 2. Handle Action Buttons Logic (Approval/Update) ---
+        const approvalButtons = document.getElementById('approvalButtons');
+        const approvalTag = document.getElementById('approvalStatusTag');
+        const statusForm = document.getElementById('statusUpdateForm');
+        const costBlock = document.getElementById('detailCostBlock');
+        const costDisplay = document.getElementById('detailCost');
+
+        // Logic for Initial Status Decision (Approval)
+        if (status === 'แจ้งซ่อม' && reporter === 'ผู้เช่า') {
+            approvalButtons.classList.remove('hidden');
+            approvalTag.classList.remove('hidden');
+            statusForm.classList.add('hidden');
+            costBlock.classList.add('hidden');
+        } else {
+            approvalButtons.classList.add('hidden');
+            approvalTag.classList.add('hidden');
+            statusForm.classList.remove('hidden');
+            costBlock.classList.remove('hidden');
+            costDisplay.innerText = `${cost} บาท`;
+        }
+
+        // --- 3. Open the Sheet ---
+        detailActionSheet.classList.add('active');
+        mask.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    // Function to handle Status Update (Called by action buttons)
+    function updateStatus(newStatus) {
+        if (newStatus === 'ยกเลิก' || newStatus === 'ซ่อมเสร็จแล้ว') {
+             if (!confirm(`คุณแน่ใจหรือไม่ที่จะเปลี่ยนสถานะเป็น "${newStatus}"?`)) {
+                 return;
+             }
+        }
+        
+        alert(`จำลอง: อัปเดตสถานะเป็น "${newStatus}" แล้ว!`);
+        closeAllSheets();
+        // ในระบบจริง: อัปเดตฐานข้อมูลและ Reload รายการ
+    }
+</script>
+
+</body>
+</html>

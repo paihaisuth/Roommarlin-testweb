@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>รายการห้องพักทั้งหมด (ตัวกรองค้นหา)</title>
+    
+    <!-- Google Fonts: Kanit -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS (CDN - Stable version) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { 
+            font-family: 'Kanit', sans-serif; 
+            background-color: #f3f4f6; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+        
+        /* Bottom Sheet Styles */
+        .bottom-sheet {
+            transform: translateY(100%);
+            transition: transform 0.3s ease-in-out;
+            max-height: 85vh; /* Limit max height */
+        }
+        .bottom-sheet.open {
+            transform: translateY(0);
+        }
+        .mask {
+            opacity: 0;
+            display: none;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .mask.open {
+            opacity: 1;
+            display: block;
+        }
+    </style>
+</head>
+<body class="min-h-screen relative"> 
+
+    <!-- ========================================================= -->
+    <!-- VIEW: ROOM LIST (รายการห้องพัก) -->
+    <!-- ========================================================= -->
+    <div id="view-room-list" class="h-screen overflow-y-auto pb-24 bg-f3f4f6">
+        
+        <!-- HEADER (Title) -->
+        <header class="w-full pt-10 px-4">
+            <h1 class="text-2xl font-extrabold text-gray-800">จัดการห้องพัก</h1>
+        </header>
+        
+        <!-- Statistics Bar (แถบสรุปสถานะ: 6 ช่อง) - (Keep as is) -->
+        <div class="px-4 mt-4 grid grid-cols-3 gap-3">
+            <div class="bg-white p-3 rounded-lg shadow-md flex flex-col items-center">
+                <p class="text-xl font-bold text-gray-700">50</p>
+                <p class="text-xs text-gray-500 mt-1">ทั้งหมด</p>
+            </div>
+            <div class="bg-green-500/10 p-3 rounded-lg shadow-md flex flex-col items-center">
+                <p class="text-xl font-bold text-green-700">8</p>
+                <p class="text-xs text-green-600 mt-1">ว่าง</p>
+            </div>
+             <div class="bg-blue-500/10 p-3 rounded-lg shadow-md flex flex-col items-center">
+                <p class="text-xl font-bold text-blue-700">30</p>
+                <p class="text-xs text-blue-600 mt-1">มีคนเช่า</p>
+            </div>
+        </div>
+        <div class="px-4 mt-3 grid grid-cols-3 gap-3">
+            <div class="bg-purple-500/10 p-3 rounded-lg shadow-md flex flex-col items-center">
+                <p class="text-xl font-bold text-purple-700">3</p>
+                <p class="text-xs text-purple-600 mt-1">จอง</p>
+            </div>
+            <div class="bg-red-500/10 p-3 rounded-lg shadow-md flex flex-col items-center">
+                <p class="text-xl font-bold text-red-700">2</p>
+                <p class="text-xs text-red-600 mt-1">ค้างชำระ</p>
+            </div>
+            <div class="bg-yellow-500/10 p-3 rounded-lg shadow-md flex flex-col items-center">
+                <p class="text-xl font-bold text-yellow-700">4</p>
+                <p class="text-xs text-yellow-600 mt-1">แจ้งซ่อม</p>
+            </div>
+        </div>
+
+        <main class="px-4 pt-4 space-y-3">
+            
+            <div class="space-y-4 pb-4">
+                
+                <!-- Room List (ใช้ openRoomActions แทน alert) -->
+                
+                <!-- 1. ห้องว่าง (เขียว) -->
+                <div onclick="openRoomActions('101');" class="bg-white rounded-xl p-4 shadow-md shadow-gray-200/50 border-l-4 border-l-green-500 transition-all duration-200 active:scale-[0.98] cursor-pointer overflow-hidden">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-xl font-extrabold text-green-700 leading-none">101</p>
+                            <p class="text-xs text-gray-600 mt-1 font-medium">พัดลม - 3,500 บ./ด.</p>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap bg-green-500/10 text-green-700"><i class="fa-solid fa-check mr-1"></i> ว่าง</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. ห้องมีผู้เช่า (ค้างชำระ + แจ้งซ่อม) - แถบแดง -->
+                <div onclick="openRoomActions('201');" class="bg-white rounded-xl p-4 shadow-md shadow-gray-200/50 border-l-4 border-l-red-500 transition-all duration-200 active:scale-[0.98] cursor-pointer overflow-hidden">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-xl font-extrabold text-red-700 leading-none">201</p>
+                            <p class="text-xs text-gray-600 mt-1 font-medium">แอร์ - 5,000 บ./ด.</p>
+                            <p class="text-xs text-blue-600 mt-1"><i class="fa-solid fa-user-tag mr-1"></i> ผู้เช่า: สมชาย ใจดี</p>
+                        </div>
+                        <div class="flex flex-col items-end space-y-1">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap bg-red-600 text-white"><i class="fa-solid fa-bell mr-1"></i> ค้างชำระ</span> 
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap bg-yellow-500/10 text-yellow-700"><i class="fa-solid fa-wrench mr-1"></i> แจ้งซ่อม</span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap bg-blue-500/10 text-blue-700"><i class="fa-solid fa-house mr-1"></i> มีคนเช่า</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 3. ห้องจอง (แจ้งซ่อมระหว่างรอเข้า) - แถบม่วง -->
+                <div onclick="openRoomActions('302');" class="bg-white rounded-xl p-4 shadow-md shadow-gray-200/50 border-l-4 border-l-purple-500 transition-all duration-200 active:scale-[0.98] cursor-pointer overflow-hidden">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-xl font-extrabold text-purple-700 leading-none">302</p>
+                            <p class="text-xs text-gray-600 mt-1 font-medium">Suite - 7,000 บ./ด.</p>
+                            <p class="text-xs text-purple-600 mt-1"><i class="fa-solid fa-calendar-check mr-1"></i> กานดา (ย้ายเข้า 15/12)</p>
+                        </div>
+                        <div class="flex flex-col items-end space-y-1">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap bg-purple-500/10 text-purple-700"><i class="fa-solid fa-bookmark mr-1"></i> จอง</span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap bg-orange-500/10 text-orange-700"><i class="fa-solid fa-person-digging mr-1"></i> ซ่อมอยู่</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 4. ห้องมีผู้เช่า (แจ้งซ่อมเท่านั้น) - แถบเหลือง -->
+                <div onclick="openRoomActions('305');" class="bg-white rounded-xl p-4 shadow-md shadow-gray-200/50 border-l-4 border-l-yellow-500 transition-all duration-200 active:scale-[0.98] cursor-pointer overflow-hidden">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-xl font-extrabold text-yellow-700 leading-none">305</p>
+                            <p class="text-xs text-gray-600 mt-1 font-medium">Suite - 7,000 บ./ด.</p>
+                            <p class="text-xs text-blue-600 mt-1"><i class="fa-solid fa-user-tag mr-1"></i> ผู้เช่า: สุดา น่ารัก</p>
+                        </div>
+                        <div class="flex flex-col items-end space-y-1">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap bg-yellow-500/10 text-yellow-700"><i class="fa-solid fa-triangle-exclamation mr-1"></i> แจ้งซ่อม</span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap bg-blue-500/10 text-blue-700"><i class="fa-solid fa-house mr-1"></i> มีคนเช่า</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. ห้องมีผู้เช่า (ปกติ) - แถบน้ำเงิน -->
+                <div onclick="openRoomActions('510');" class="bg-white rounded-xl p-4 shadow-md shadow-gray-200/50 border-l-4 border-l-blue-500 transition-all duration-200 active:scale-[0.98] cursor-pointer overflow-hidden">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-xl font-extrabold text-blue-700 leading-none">510</p>
+                            <p class="text-xs text-gray-600 mt-1 font-medium">พัดลม - 3,500 บ./ด.</p>
+                            <p class="text-xs text-blue-600 mt-1"><i class="fa-solid fa-user-tag mr-1"></i> ผู้เช่า: สมศรี มีโชค</p>
+                        </div>
+                        <div class="flex flex-col items-end space-y-1">
+                             <span class="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap bg-blue-500/10 text-blue-700"><i class="fa-solid fa-house mr-1"></i> มีคนเช่า</span>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="h-10"></div>
+        </main>
+        
+        <!-- FAB Buttons (2 ปุ่ม) -->
+        <div class="fixed bottom-24 right-5 z-30 flex flex-col gap-3 items-end">
+             <!-- 2. คัดกรอง/จัดเรียง (เรียกฟังก์ชัน openFilter) -->
+            <button onclick="openFilter();" class="w-12 h-12 bg-white text-gray-600 rounded-full shadow-lg border border-gray-100 flex items-center justify-center transition active:scale-90 hover:bg-gray-50">
+                <i class="fa-solid fa-sliders text-lg"></i>
+            </button>
+            <!-- 1. สร้างห้อง (เรียก openAddRoom) -->
+            <button onclick="openAddRoom();" class="w-14 h-14 bg-blue-600 text-white rounded-full shadow-xl shadow-blue-500/30 flex items-center justify-center transition active:scale-90 hover:bg-blue-700">
+                <i class="fa-solid fa-plus text-2xl"></i>
+            </button>
+        </div>
+
+
+        <!-- Bottom Navigation (Bottom Bar) - (Keep as is) -->
+        <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 z-40 pb-safe shadow-[0_-4px_10px_rgba(0,0,0,0.02)]">
+            <div class="grid grid-cols-3 h-16">
+                <!-- รายงานผล -->
+                <a href="#" class="flex flex-col items-center justify-center text-gray-400 hover:text-blue-600 transition active:scale-95 group">
+                    <i class="fa-solid fa-chart-pie text-xl mb-1 group-hover:scale-110 transition"></i>
+                    <span class="text-[10px] font-medium">รายงานผล</span>
+                </a>
+                <!-- หน้าหลัก (Active) -->
+                <a href="#" class="flex flex-col items-center justify-center text-blue-600 relative">
+                    <i class="fa-solid fa-house text-xl mb-1 mt-1"></i>
+                    <span class="text-[10px] font-bold">หน้าหลัก</span>
+                </a>
+                <!-- โปรไฟล์ -->
+                <a href="#" class="flex flex-col items-center justify-center text-gray-400 hover:text-blue-600 transition active:scale-95 group">
+                    <i class="fa-solid fa-user-circle text-xl mb-1 group-hover:scale-110 transition"></i>
+                    <span class="text-[10px] font-medium">โปรไฟล์</span>
+                </a>
+            </div>
+        </nav>
+        
+        <div class="h-[env(safe-area-inset-bottom)] bg-white fixed bottom-0 w-full z-30"></div>
+    </div>
+    
+    <!-- ========================================================= -->
+    <!-- OVERLAYS: ROOM ACTION SHEET (ใหม่) -->
+    <!-- ========================================================= -->
+    <div id="roomActionMask" class="mask fixed inset-0 bg-black/60 z-50 backdrop-blur-[2px]" onclick="closeRoomActions()"></div>
+    <div id="roomActionSheet" class="bottom-sheet fixed bottom-0 left-0 w-full bg-white z-[60] rounded-t-[32px] shadow-2xl flex flex-col max-h-[85vh]">
+        <div class="flex justify-between items-center px-6 pt-6 pb-2 border-b border-gray-100">
+            <!-- HEADER: การดำเนินการสำหรับห้อง -->
+            <h2 class="text-lg font-bold text-gray-800">การดำเนินการสำหรับห้อง <span id="selectedRoomNumber" class="text-blue-600"></span></h2> 
+            <button onclick="closeRoomActions()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-4 space-y-2">
+            
+            <!-- 1. จอง -->
+            <button onclick="handleRoomAction('จอง');" class="w-full flex items-center gap-3 p-4 rounded-xl text-left hover:bg-gray-50 active:bg-gray-100 transition">
+                <i class="fa-solid fa-bookmark text-purple-500 text-xl w-6"></i>
+                <span class="text-base font-medium text-gray-700">จองห้องพัก</span>
+            </button>
+            
+            <!-- 2. ทำสัญญา -->
+            <button onclick="handleRoomAction('ทำสัญญา');" class="w-full flex items-center gap-3 p-4 rounded-xl text-left hover:bg-gray-50 active:bg-gray-100 transition">
+                <i class="fa-solid fa-file-signature text-blue-500 text-xl w-6"></i>
+                <span class="text-base font-medium text-gray-700">ทำสัญญาเช่า</span>
+            </button>
+            
+            <!-- 3. รายการเช่า/รายละเอียด -->
+            <button onclick="handleRoomAction('รายการเช่า');" class="w-full flex items-center gap-3 p-4 rounded-xl text-left hover:bg-gray-50 active:bg-gray-100 transition">
+                <i class="fa-solid fa-list-check text-green-500 text-xl w-6"></i>
+                <span class="text-base font-medium text-gray-700">ดูรายละเอียด/รายการเช่า</span>
+            </button>
+            
+            <!-- 4. รายการซ่อม -->
+            <button onclick="handleRoomAction('รายการซ่อม');" class="w-full flex items-center gap-3 p-4 rounded-xl text-left hover:bg-gray-50 active:bg-gray-100 transition">
+                <i class="fa-solid fa-wrench text-yellow-500 text-xl w-6"></i>
+                <span class="text-base font-medium text-gray-700">จัดการรายการซ่อม</span>
+            </button>
+
+        </div>
+        <div class="p-4 border-t border-gray-100 pb-safe bg-white rounded-t-xl">
+             <button onclick="closeRoomActions()" class="w-full py-3.5 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50">ยกเลิก</button>
+        </div>
+    </div>
+
+    
+    <!-- ========================================================= -->
+    <!-- OVERLAYS: FILTER SHEET (Keep as is) -->
+    <!-- ========================================================= -->
+    <div id="filterMask" class="mask fixed inset-0 bg-black/60 z-50 backdrop-blur-[2px]" onclick="closeFilter()"></div>
+    <!-- ... (Filter Sheet HTML Content - Keep as is) ... -->
+    <div id="filterSheet" class="bottom-sheet fixed bottom-0 left-0 w-full bg-white z-[60] rounded-t-[32px] shadow-2xl flex flex-col max-h-[85vh]">
+        <div class="flex justify-between items-center px-6 pt-6 pb-2">
+            <!-- HEADER: ตัวกรองค้นหา -->
+            <h2 class="text-lg font-bold text-gray-800">ตัวกรองค้นหา</h2> 
+            <button onclick="closeFilter()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-4 space-y-6">
+            
+            <!-- 1. กรองตามสถานะ (Filter by Status) -->
+            <div>
+                <label class="text-sm font-semibold text-gray-700 mb-3 block flex items-center gap-2"><i class="fa-solid fa-filter text-blue-500"></i> กรองตามสถานะ</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <!-- ว่าง -->
+                    <label class="cursor-pointer flex items-center justify-between p-3 rounded-xl border border-gray-200 has-[:checked]:bg-green-50 has-[:checked]:border-green-500 transition"><span class="text-sm text-gray-700"><i class="fa-solid fa-check text-green-500 mr-1"></i> ห้องว่าง</span><input type="checkbox" name="filter_status" class="accent-green-600"></label>
+                    <!-- จอง -->
+                    <label class="cursor-pointer flex items-center justify-between p-3 rounded-xl border border-gray-200 has-[:checked]:bg-purple-50 has-[:checked]:border-purple-500 transition"><span class="text-sm text-gray-700"><i class="fa-solid fa-bookmark text-purple-500 mr-1"></i> จอง</span><input type="checkbox" name="filter_status" class="accent-purple-600"></label>
+                    <!-- มีคนเช่า -->
+                    <label class="cursor-pointer flex items-center justify-between p-3 rounded-xl border border-gray-200 has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 transition"><span class="text-sm text-gray-700"><i class="fa-solid fa-house text-blue-500 mr-1"></i> มีคนเช่า</span><input type="checkbox" name="filter_status" class="accent-blue-600"></label>
+                    <!-- ค้างชำระ -->
+                    <label class="cursor-pointer flex items-center justify-between p-3 rounded-xl border border-gray-200 has-[:checked]:bg-red-50 has-[:checked]:border-red-500 transition"><span class="text-sm text-gray-700"><i class="fa-solid fa-exclamation-circle text-red-500 mr-1"></i> ค้างชำระ</span><input type="checkbox" name="filter_status" class="accent-red-600"></label>
+                    <!-- แจ้งซ่อม -->
+                    <label class="cursor-pointer flex items-center justify-between p-3 rounded-xl border border-gray-200 has-[:checked]:bg-yellow-50 has-[:checked]:border-yellow-500 transition"><span class="text-sm text-gray-700"><i class="fa-solid fa-wrench text-yellow-500 mr-1"></i> แจ้งซ่อม</span><input type="checkbox" name="filter_status" class="accent-yellow-600"></label>
+                </div>
+            </div>
+
+        </div>
+        <div class="p-4 border-t border-gray-100 pb-safe bg-white rounded-t-xl">
+            <div class="flex gap-3">
+                <button onclick="closeFilter()" class="flex-1 py-3.5 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50">ล้างค่า</button>
+                <button onclick="closeFilter()" class="flex-[2] py-3.5 rounded-xl bg-gray-800 text-white font-bold text-sm shadow-lg shadow-blue-500/30 active:scale-[0.98] transition">ค้นหา</button>
+                
+            </div>
+        </div>
+    </div>
+    
+    <!-- ========================================================= -->
+    <!-- NEW OVERLAYS: ADD ROOM SHEET (Keep as is) -->
+    <!-- ========================================================= -->
+    <div id="addRoomMask" class="mask fixed inset-0 bg-black/60 z-50 backdrop-blur-[2px]" onclick="closeAddRoom()"></div>
+    <!-- ... (Add Room Sheet HTML Content - Keep as is) ... -->
+    <div id="addRoomSheet" class="bottom-sheet fixed bottom-0 left-0 w-full bg-white z-[60] rounded-t-[32px] shadow-2xl flex flex-col max-h-[85vh]">
+        <div class="flex justify-between items-center px-6 pt-6 pb-2 border-b border-gray-100">
+            <!-- HEADER: สร้างห้องพักใหม่ -->
+            <h2 class="text-lg font-bold text-gray-800">สร้างห้องพักใหม่</h2> 
+            <button onclick="closeAddRoom()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-4 space-y-6">
+            
+            <!-- Room Creation Mode Toggle -->
+            <div class="w-full p-1 bg-gray-100 rounded-xl flex">
+                <button id="mode-single-btn" onclick="toggleRoomMode('single')" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition bg-blue-600 text-white shadow-md shadow-blue-500/20">สร้างทีละห้อง</button>
+                <button id="mode-bulk-btn" onclick="toggleRoomMode('bulk')" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition text-gray-600 hover:bg-gray-200">สร้างหลายห้อง</button>
+            </div>
+            
+            <!-- 1. Single Room Form (สร้างทีละห้อง) -->
+            <div id="single-room-form" class="space-y-4">
+                <div>
+                    <label for="room_number" class="text-xs font-semibold text-gray-600 mb-1 block">ชื่อ/หมายเลขห้อง <span class="text-red-500">*</span></label>
+                    <input type="text" id="room_number" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="เช่น 101" required>
+                </div>
+                <div>
+                    <label for="room_type_single" class="text-xs font-semibold text-gray-600 mb-1 block">ประเภทห้อง</label>
+                    <select id="room_type_single" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white">
+                        <option value="พัดลม">พัดลม</option>
+                        <option value="แอร์">แอร์</option>
+                        <option value="Suite">Suite</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="room_price_single" class="text-xs font-semibold text-gray-600 mb-1 block">ราคา/เดือน (บาท)</label>
+                    <input type="number" id="room_price_single" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="3500" value="3500" required>
+                </div>
+            </div>
+            
+            <!-- 2. Bulk Room Form (สร้างหลายห้อง) -->
+            <div id="bulk-room-form" class="space-y-4 hidden">
+                
+                <!-- คำนำหน้า (Prefix) -->
+                <div> 
+                    <label for="prefix" class="text-xs font-semibold text-gray-600 mb-1 block">คำนำหน้า (Prefix)</label>
+                    <input type="text" id="prefix" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="เช่น A, B1, 1" value="A">
+                </div>
+                
+                <!-- เลขที่เริ่มต้น/สิ้นสุด (รวมแถวเดียวกัน) -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="start_num" class="text-xs font-semibold text-gray-600 mb-1 block">เลขที่เริ่มต้น <span class="text-red-500">*</span></label>
+                        <input type="number" id="start_num" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="1" value="1" min="1" required>
+                    </div>
+                    <div>
+                        <label for="end_num" class="text-xs font-semibold text-gray-600 mb-1 block">เลขที่สิ้นสุด <span class="text-red-500">*</span></label>
+                        <input type="number" id="end_num" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="10" value="10" min="1" required>
+                    </div>
+                </div>
+                
+                <!-- ประเภทห้อง -->
+                 <div>
+                    <label for="room_type_bulk" class="text-xs font-semibold text-gray-600 mb-1 block">ประเภทห้อง</label>
+                    <select id="room_type_bulk" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white">
+                        <option value="พัดลม">พัดลม</option>
+                        <option value="แอร์">แอร์</option>
+                        <option value="Suite">Suite</option>
+                    </select>
+                </div>
+                
+                <!-- Room List Preview Area -->
+                <div id="preview-container" class="mt-6 border border-gray-200 rounded-xl p-4 bg-gray-50 hidden">
+                    <p class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2"><i class="fa-solid fa-eye text-orange-500"></i> รายการห้องที่สร้าง (<span id="preview-count">0</span> ห้อง)</p>
+                    <div id="room-preview" class="grid grid-cols-3 gap-2 text-xs text-gray-600 max-h-40 overflow-y-auto">
+                        <!-- Preview Rooms will be inserted here -->
+                    </div>
+                    <p id="preview-error" class="text-red-500 text-xs mt-2 hidden"><i class="fa-solid fa-triangle-exclamation mr-1"></i> กรุณากรอกข้อมูลให้ถูกต้อง</p>
+                </div>
+
+            </div>
+
+        </div>
+        <div class="p-4 border-t border-gray-100 pb-safe bg-white rounded-t-xl">
+            <div class="flex gap-3">
+                <button onclick="clearRoomForm()" class="flex-1 py-3.5 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50">ล้างค่า</button>
+                <button id="action-btn" onclick="handleRoomCreation()" class="flex-[2] py-3.5 rounded-xl bg-blue-600 text-white font-bold text-sm shadow-lg shadow-blue-500/30 active:scale-[0.98] transition">ค้นหา</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // =========================================================
+        // Shared Bottom Sheet Functions
+        // =========================================================
+        function openSheet(sheetId, maskId) {
+            const sheet = document.getElementById(sheetId);
+            const mask = document.getElementById(maskId);
+            mask.classList.add('open');
+            sheet.classList.add('open');
+            document.body.style.overflow = 'hidden'; 
+        }
+
+        function closeSheet(sheetId, maskId) {
+            const sheet = document.getElementById(sheetId);
+            const mask = document.getElementById(maskId);
+            sheet.classList.remove('open');
+            setTimeout(() => {
+                mask.classList.remove('open');
+                document.body.style.overflow = 'auto'; 
+            }, 300);
+        }
+
+        // =========================================================
+        // FILTER SHEET FUNCTIONS
+        // =========================================================
+        function openFilter() {
+            closeAddRoom(); // Close other sheets if open
+            closeRoomActions(); // Close other sheets if open
+            openSheet('filterSheet', 'filterMask');
+        }
+
+        function closeFilter() {
+            closeSheet('filterSheet', 'filterMask');
+        }
+        
+        // =========================================================
+        // ROOM ACTION SHEET FUNCTIONS (ใหม่)
+        // =========================================================
+        function openRoomActions(roomNumber) {
+            closeFilter(); // Close other sheets if open
+            closeAddRoom(); // Close other sheets if open
+            document.getElementById('selectedRoomNumber').textContent = roomNumber;
+            openSheet('roomActionSheet', 'roomActionMask');
+        }
+
+        function closeRoomActions() {
+            closeSheet('roomActionSheet', 'roomActionMask');
+        }
+
+        function handleRoomAction(action) {
+            const roomNumber = document.getElementById('selectedRoomNumber').textContent;
+            alert(`[ห้อง ${roomNumber}] เลือกดำเนินการ: ${action}\n\n(จำลองการเปลี่ยนหน้า)`);
+            closeRoomActions();
+        }
+
+        // =========================================================
+        // ADD ROOM SHEET FUNCTIONS
+        // =========================================================
+        let currentMode = 'single'; 
+
+        function openAddRoom() {
+            closeFilter(); // Close other sheets if open
+            closeRoomActions(); // Close other sheets if open
+            openSheet('addRoomSheet', 'addRoomMask');
+            toggleRoomMode(currentMode); 
+            clearRoomForm(false); 
+        }
+
+        function closeAddRoom() {
+            closeSheet('addRoomSheet', 'addRoomMask');
+        }
+        
+        function toggleRoomMode(mode) {
+            currentMode = mode;
+            const singleForm = document.getElementById('single-room-form');
+            const bulkForm = document.getElementById('bulk-room-form');
+            const singleBtn = document.getElementById('mode-single-btn');
+            const bulkBtn = document.getElementById('mode-bulk-btn');
+            const actionBtn = document.getElementById('action-btn');
+            const previewContainer = document.getElementById('preview-container');
+
+            if (mode === 'single') {
+                singleForm.classList.remove('hidden');
+                bulkForm.classList.add('hidden');
+                singleBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-500/20');
+                singleBtn.classList.remove('text-gray-600', 'hover:bg-gray-200');
+                bulkBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-500/20');
+                bulkBtn.classList.add('text-gray-600', 'hover:bg-gray-200');
+                actionBtn.textContent = 'สร้างห้องพัก';
+                actionBtn.onclick = () => createSingleRoom();
+                previewContainer.classList.add('hidden');
+            } else {
+                bulkForm.classList.remove('hidden');
+                singleForm.classList.add('hidden');
+                bulkBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-500/20');
+                bulkBtn.classList.remove('text-gray-600', 'hover:bg-gray-200');
+                singleBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-500/20');
+                singleBtn.classList.add('text-gray-600', 'hover:bg-gray-200');
+                actionBtn.textContent = 'แสดงตัวอย่าง';
+                actionBtn.onclick = () => handleRoomCreation();
+                previewContainer.classList.add('hidden'); 
+            }
+        }
+        
+        function clearRoomForm(shouldToggle = true) {
+            // Clear Single Room Inputs
+            document.getElementById('room_number').value = '';
+            document.getElementById('room_price_single').value = '3500';
+            document.getElementById('room_type_single').value = 'พัดลม';
+            
+            // Clear Bulk Room Inputs
+            document.getElementById('prefix').value = 'A';
+            document.getElementById('start_num').value = '1';
+            document.getElementById('end_num').value = '10';
+            document.getElementById('room_type_bulk').value = 'พัดลม';
+            
+            // Clear Preview Area
+            document.getElementById('room-preview').innerHTML = '';
+            document.getElementById('preview-count').textContent = '0';
+            document.getElementById('preview-container').classList.add('hidden');
+            document.getElementById('preview-error').classList.add('hidden');
+
+            if (shouldToggle) {
+                // Reset action button for bulk mode to 'Preview'
+                if (currentMode === 'bulk') {
+                    document.getElementById('action-btn').textContent = 'แสดงตัวอย่าง';
+                    document.getElementById('action-btn').onclick = () => handleRoomCreation();
+                }
+            }
+        }
+
+        function handleRoomCreation() {
+            if (currentMode === 'single') {
+                createSingleRoom(); 
+            } else {
+                previewRooms(); 
+            }
+        }
+
+        function previewRooms() {
+            const prefix = document.getElementById('prefix').value.trim();
+            const startNum = parseInt(document.getElementById('start_num').value);
+            const endNum = parseInt(document.getElementById('end_num').value);
+            const roomType = document.getElementById('room_type_bulk').value;
+            const previewDiv = document.getElementById('room-preview');
+            const previewContainer = document.getElementById('preview-container');
+            const actionBtn = document.getElementById('action-btn');
+            const errorDiv = document.getElementById('preview-error');
+
+            previewDiv.innerHTML = '';
+            errorDiv.classList.add('hidden');
+            previewContainer.classList.remove('hidden');
+
+            // 1. Validation
+            if (isNaN(startNum) || isNaN(endNum) || startNum < 1 || endNum < startNum || endNum > 9999) {
+                errorDiv.classList.remove('hidden');
+                previewDiv.innerHTML = `<div class="col-span-3 text-red-500 text-center text-xs">ข้อมูลตัวเลขไม่ถูกต้อง (${startNum} ถึง ${endNum})</div>`;
+                document.getElementById('preview-count').textContent = '0';
+                actionBtn.textContent = 'แสดงตัวอย่าง';
+                actionBtn.onclick = () => handleRoomCreation();
+                return;
+            }
+
+            // 2. Determine Padding (Leading Zeros)
+            const count = Math.max(startNum.toString().length, endNum.toString().length);
+            const paddingLength = count < 2 ? 2 : count; 
+
+            // 3. Generate Room List
+            const roomList = [];
+            for (let i = startNum; i <= endNum; i++) {
+                const roomNumber = prefix + i.toString().padStart(paddingLength, '0'); 
+                roomList.push(roomNumber);
+                previewDiv.innerHTML += `<span class="bg-gray-200 p-1 rounded-md text-center">${roomNumber}</span>`;
+            }
+            
+            // 4. Update UI and Button
+            document.getElementById('preview-count').textContent = roomList.length;
+            actionBtn.textContent = `สร้าง ${roomList.length} ห้อง`;
+            actionBtn.onclick = () => createBulkRooms(roomList, roomType); 
+        }
+
+        function createSingleRoom() {
+            const roomNumber = document.getElementById('room_number').value.trim();
+            const roomType = document.getElementById('room_type_single').value;
+            const roomPrice = document.getElementById('room_price_single').value;
+
+            if (!roomNumber) {
+                alert('กรุณากรอกชื่อ/หมายเลขห้อง');
+                return;
+            }
+
+            alert(`--- สร้างห้องเดียวสำเร็จ ---\nห้อง: ${roomNumber}\nประเภท: ${roomType}\nราคา: ${roomPrice} บาท\n\n(จำลองการสร้างห้อง)`);
+            closeAddRoom();
+        }
+
+        function createBulkRooms(roomList, roomType) { 
+            if (!roomList || roomList.length === 0) {
+                alert('ไม่พบรายการห้องที่จะสร้าง กรุณาแสดงตัวอย่างอีกครั้ง');
+                return;
+            }
+
+            const roomCount = roomList.length;
+            const firstRoom = roomList[0];
+            const lastRoom = roomList[roomList.length - 1];
+
+            alert(`--- สร้างห้องชุดสำเร็จ ---\nจำนวน: ${roomCount} ห้อง\nเริ่ม: ${firstRoom} ถึง ${lastRoom}\nประเภท: ${roomType}\n\n(จำลองการสร้างห้อง)`);
+            closeAddRoom();
+        }
+
+
+        // Ensure initial state is closed (good practice)
+        document.addEventListener('DOMContentLoaded', () => {
+             // Initial close states for all sheets
+             const sheets = [
+                 { id: 'filterMask', sheet: 'filterSheet' },
+                 { id: 'addRoomMask', sheet: 'addRoomSheet' },
+                 { id: 'roomActionMask', sheet: 'roomActionSheet' } // New sheet
+             ];
+
+             sheets.forEach(item => {
+                 const mask = document.getElementById(item.id);
+                 const sheet = document.getElementById(item.sheet);
+                 if (mask) mask.classList.remove('open');
+                 if (sheet) sheet.classList.remove('open');
+             });
+
+             // Set initial mode for Add Room Sheet
+             toggleRoomMode('single');
+        });
+    </script>
+
+</body>
+</html>

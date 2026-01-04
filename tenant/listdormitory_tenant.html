@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Room System - Unified Bottom Bar</title>
+    
+    <!-- Google Fonts: Kanit -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #f9fafb; -webkit-tap-highlight-color: transparent; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        /* Sheets & Masks */
+        .bottom-sheet { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); transform: translateY(100%); }
+        .bottom-sheet.active { transform: translateY(0); }
+        .mask { transition: opacity 0.3s; opacity: 0; pointer-events: none; }
+        .mask.active { opacity: 1; pointer-events: auto; }
+
+        /* Combined Bottom Bar */
+        .unified-bar {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(15px);
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.08);
+        }
+
+        /* Option Chips */
+        .option-chip input:checked + div {
+            background-color: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1rem;
+        }
+
+        .slide-view { animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+    </style>
+</head>
+<body class="min-h-screen pb-48 relative"> 
+
+<!-- 1. HEADER -->
+<header class="px-5 pt-10 pb-2">
+    <div class="flex items-center gap-2 text-gray-400 text-[10px] mb-1">
+        <span>ปทุมธานี</span> <i class="fa-solid fa-chevron-right text-[8px]"></i> <span>รอบ ม.รังสิต</span>
+    </div>
+    <h1 id="mainLocationTitle" class="text-2xl font-bold text-gray-800 tracking-tight">หอพักรอบ ม.รังสิต</h1>
+    <p class="text-xs text-gray-500">จองหรือนัดชมห้องพัก (จำกัดภายใน 15 วัน)</p>
+</header>
+
+<!-- 2. ROOM LIST -->
+<main class="px-4 py-4 space-y-6">
+    <!-- Card ตัวอย่าง -->
+    <div class="bg-white rounded-[32px] shadow-sm border border-white overflow-hidden active:scale-[0.99] transition-transform duration-200">
+        <div class="relative h-64"> 
+            <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=2070&auto=format&fit=crop" class="w-full h-full object-cover">
+            <div class="absolute bottom-4 left-4 bg-green-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">ว่าง 3 ห้อง</div>
+        </div>
+        <div class="p-5">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800">The Campus Condo</h3>
+                    <p class="text-xs text-gray-400 mt-1 font-medium"><i class="fa-solid fa-location-dot text-red-500"></i> ซอยรังสิตภิรมย์</p>
+                </div>
+                <p class="text-xl font-bold text-blue-600">฿5,500</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="openRequest('book', 'The Campus Condo', 5500)" class="flex-1 bg-orange-100 text-orange-600 font-bold py-4 rounded-2xl text-xs active:scale-95 transition">จองล็อกห้อง</button>
+                <button onclick="openRequest('view', 'The Campus Condo', 5500)" class="flex-1 bg-blue-50 text-blue-600 font-bold py-4 rounded-2xl text-xs active:scale-95 transition">นัดดูห้องพัก</button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- 3. UNIFIED BOTTOM BAR (Search + Nav Combined) -->
+<div class="unified-bar fixed bottom-0 left-0 right-0 z-50 px-4 pt-3 pb-safe border-t border-gray-100">
+    <!-- Row 1: Search, Map, Filter -->
+    <div class="flex items-center gap-2 mb-3">
+        <button onclick="openLocation()" class="w-11 h-11 flex-shrink-0 bg-gray-100 text-blue-600 rounded-full flex items-center justify-center active:scale-90 transition">
+            <i class="fa-solid fa-map-location-dot text-lg"></i>
+        </button>
+        <div class="flex-1 bg-gray-100 rounded-full h-11 flex items-center px-4 relative">
+            <i class="fa-solid fa-magnifying-glass text-gray-400 text-sm"></i>
+            <input type="text" placeholder="ค้นหาหอพัก..." class="bg-transparent w-full px-2 text-sm outline-none text-gray-700">
+            <button onclick="openFilter()" class="absolute right-1 top-1 w-9 h-9 bg-white rounded-full shadow-sm flex items-center justify-center text-gray-500">
+                <i class="fa-solid fa-sliders text-xs"></i>
+            </button>
+        </div>
+    </div>
+    <!-- Row 2: Navigation Icons -->
+    <div class="grid grid-cols-3 text-center pb-2">
+        <div class="text-gray-400 py-1 transition active:scale-95"><i class="fa-solid fa-chart-pie text-xl"></i><p class="text-[10px]">รายงานผล</p></div>
+        <div class="text-blue-600 py-1 transition active:scale-95"><i class="fa-solid fa-house text-xl mb-0.5"></i><p class="text-[10px] font-bold">หน้าหลัก</p></div>
+        <div onclick="alert('หน้าโปรไฟล์')" class="text-gray-400 py-1 transition active:scale-95 cursor-pointer"><i class="fa-solid fa-user-circle text-xl"></i><p class="text-[10px]">โปรไฟล์</p></div>
+    </div>
+</div>
+
+<!-- 4. SHEETS -->
+
+<!-- Request Sheet (จอง/นัดดู) -->
+<div id="requestSheet" class="bottom-sheet fixed bottom-0 left-0 w-full bg-white z-[70] rounded-t-[40px] shadow-2xl flex flex-col max-h-[95vh]">
+    <div class="w-12 h-1 bg-gray-200 rounded-full mx-auto mt-3"></div>
+    <div class="px-8 pt-4 pb-4 flex justify-between items-center border-b border-gray-100">
+        <div><h2 id="sheetTitle" class="text-xl font-bold text-gray-800">ส่งคำขอ</h2><p id="sheetSubtitle" class="text-xs text-gray-400"></p></div>
+        <button onclick="closeAllSheets()" class="w-10 h-10 bg-gray-50 rounded-full text-gray-400 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="flex-1 overflow-y-auto px-8 py-6 space-y-8 no-scrollbar">
+        <div>
+            <label class="text-sm font-bold text-gray-700 mb-3 block">1. เลือกประเภทห้อง</label>
+            <div class="grid grid-cols-2 gap-3">
+                <label class="option-chip cursor-pointer">
+                    <input type="radio" name="rT" value="Studio" checked class="hidden" onchange="selectedType='Studio'">
+                    <div class="p-4 border-2 border-gray-100 rounded-2xl text-center font-bold text-sm transition">Studio</div>
+                </label>
+                <label class="option-chip cursor-pointer">
+                    <input type="radio" name="rT" value="Suite" class="hidden" onchange="selectedType='Suite'">
+                    <div class="p-4 border-2 border-gray-100 rounded-2xl text-center font-bold text-sm transition">Suite</div>
+                </label>
+            </div>
+        </div>
+        <div>
+            <label class="text-sm font-bold text-gray-700 mb-3 block">2. เลือกหมายเลขห้อง</label>
+            <div id="roomList" class="flex flex-wrap gap-2"></div>
+        </div>
+        <div>
+            <label id="dateLabel" class="text-sm font-bold text-gray-700 mb-1 block">3. วันที่ดำเนินการ</label>
+            <p class="text-[10px] text-gray-400 mb-3 italic">* จำกัดภายใน 15 วัน (ถึง 7 ม.ค. 69)</p>
+            <div id="bookDates" class="hidden grid grid-cols-3 gap-2"></div>
+            <div id="viewDates" class="hidden flex gap-3">
+                <select id="dropMonth" class="flex-1 bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm" onchange="updateDaysDropdown()"></select>
+                <select id="dropDay" class="flex-1 bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm"></select>
+            </div>
+        </div>
+        <div class="bg-blue-50 p-5 rounded-2xl border border-blue-100 flex justify-between items-center">
+            <span id="summaryLabel" class="text-sm text-gray-500">มัดจำสิทธิ์</span>
+            <span id="summaryAmount" class="font-bold text-blue-700 text-lg">฿0</span>
+        </div>
+    </div>
+    <div class="p-8 border-t border-gray-100 pb-12">
+        <button id="submitBtn" onclick="sendFinalRequest()" class="w-full text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-all text-lg">ยืนยันส่งคำขอ</button>
+    </div>
+</div>
+
+<!-- Filter Sheet -->
+<div id="filterSheet" class="bottom-sheet fixed bottom-0 left-0 w-full bg-white z-[70] rounded-t-[32px] shadow-2xl flex flex-col max-h-[85vh]">
+    <div class="px-6 pt-6 pb-4 border-b flex justify-between items-center">
+        <h2 class="text-lg font-bold text-gray-800">ตัวกรองค้นหา</h2>
+        <button onclick="closeAllSheets()" class="text-gray-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+    </div>
+    <div class="p-6 space-y-6 flex-1 overflow-y-auto">
+        <div>
+            <label class="text-sm font-bold text-gray-700 mb-3 block">สถานะ</label>
+            <div class="grid grid-cols-2 gap-2">
+                <button class="py-2.5 bg-green-50 border-2 border-green-500 text-green-700 rounded-xl font-bold text-xs">เฉพาะห้องว่าง</button>
+                <button class="py-2.5 border border-gray-200 text-gray-400 rounded-xl text-xs">ทั้งหมด</button>
+            </div>
+        </div>
+    </div>
+    <div class="p-6 pb-10 border-t"><button onclick="closeAllSheets()" class="w-full bg-gray-900 text-white font-bold py-4 rounded-2xl">ใช้ตัวกรอง</button></div>
+</div>
+
+<!-- Location Sheet -->
+<div id="locationSheet" class="bottom-sheet fixed bottom-0 left-0 w-full bg-white z-[70] rounded-t-[32px] shadow-2xl flex flex-col h-[70vh]">
+    <div class="px-6 py-5 border-b flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <button id="locBackBtn" onclick="backToProvinces()" class="hidden w-8 h-8 rounded-full bg-gray-100 items-center justify-center text-gray-600"><i class="fa-solid fa-chevron-left"></i></button>
+            <h2 id="locTitle" class="text-lg font-bold text-gray-800">เลือกจังหวัด</h2>
+        </div>
+        <button onclick="closeAllSheets()" class="text-gray-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+    </div>
+    <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+        <div id="viewProvinces" class="space-y-2">
+            <div onclick="selectProvince('ปทุมธานี')" class="p-4 bg-white rounded-2xl flex justify-between font-bold">ปทุมธานี <i class="fa-solid fa-chevron-right text-gray-200"></i></div>
+            <div onclick="selectProvince('กรุงเทพฯ')" class="p-4 bg-white rounded-2xl flex justify-between font-bold">กรุงเทพฯ <i class="fa-solid fa-chevron-right text-gray-200"></i></div>
+        </div>
+        <div id="viewAreas" class="hidden slide-view space-y-2">
+            <div onclick="selectArea('รอบ ม.รังสิต')" class="p-4 bg-white rounded-2xl flex justify-between font-bold text-blue-600">รอบ ม.รังสิต <i class="fa-solid fa-check"></i></div>
+        </div>
+    </div>
+</div>
+
+<div id="commonMask" class="mask fixed inset-0 bg-black/60 z-[65] backdrop-blur-[2px]" onclick="closeAllSheets()"></div>
+
+<script>
+    let mode = 'book';
+    let selectedRoom = '';
+    let selectedType = 'Studio';
+    let selectedBookDate = '';
+    const today = new Date(); // วันนี้ 23 ธ.ค. 2568
+    const limit = 15;
+    const maxDate = new Date(today);
+    maxDate.setDate(today.getDate() + limit);
+
+    function openRequest(type, dormName, price) {
+        mode = type;
+        document.getElementById('sheetSubtitle').innerText = dormName;
+        const bookDates = document.getElementById('bookDates');
+        const viewDates = document.getElementById('viewDates');
+        const submitBtn = document.getElementById('submitBtn');
+
+        if (mode === 'book') {
+            document.getElementById('sheetTitle').innerText = 'จองล็อกห้อง';
+            document.getElementById('dateLabel').innerText = '3. เลือกวันเริ่มสัญญา (เข้าอยู่)';
+            bookDates.classList.remove('hidden'); viewDates.classList.add('hidden');
+            submitBtn.className = "w-full bg-orange-500 text-white font-bold py-4 rounded-2xl shadow-lg";
+            document.getElementById('summaryLabel').innerText = "มัดจำสิทธิ์จอง";
+            document.getElementById('summaryAmount').innerText = "฿1,000";
+            renderBookOptions();
+        } else {
+            document.getElementById('sheetTitle').innerText = 'นัดดูห้องพัก';
+            document.getElementById('dateLabel').innerText = '3. นัดหมายวันเข้าชม';
+            viewDates.classList.remove('hidden'); bookDates.classList.add('hidden');
+            submitBtn.className = "w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg";
+            document.getElementById('summaryLabel').innerText = "ค่าธรรมเนียม";
+            document.getElementById('summaryAmount').innerText = "ฟรี";
+            renderViewDropdowns();
+        }
+        renderRooms();
+        openSheet('requestSheet');
+    }
+
+    function renderRooms() {
+        const list = document.getElementById('roomList'); list.innerHTML = '';
+        ['101', '202', '305'].forEach(num => {
+            list.innerHTML += `<label class="option-chip cursor-pointer"><input type="radio" name="room" value="${num}" class="hidden" onchange="selectedRoom='${num}'"><div class="px-5 py-2.5 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-500">${num}</div></label>`;
+        });
+    }
+
+    function renderBookOptions() {
+        const container = document.getElementById('bookDates'); container.innerHTML = '';
+        const targetDays = [1, 15, 30];
+        for (let m = 0; m <= 1; m++) {
+            targetDays.forEach(day => {
+                let date = new Date(today.getFullYear(), today.getMonth() + m, day);
+                if (date >= today && date <= maxDate) {
+                    const dateStr = date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+                    const val = date.toISOString().split('T')[0];
+                    container.innerHTML += `<label class="option-chip cursor-pointer"><input type="radio" name="bDate" value="${val}" class="hidden" onchange="selectedBookDate='${val}'"><div class="py-3 border-2 border-gray-100 rounded-xl text-center text-xs font-bold">${dateStr}</div></label>`;
+                }
+            });
+        }
+    }
+
+    function renderViewDropdowns() {
+        const dropMonth = document.getElementById('dropMonth'); dropMonth.innerHTML = '';
+        const months = [];
+        let cur = new Date(today);
+        while (cur <= maxDate) {
+            const m = cur.getMonth(); const y = cur.getFullYear();
+            if (!months.find(x => x.m === m)) months.push({ m, y, name: cur.toLocaleDateString('th-TH', { month: 'long' }) });
+            cur.setDate(cur.getDate() + 1);
+        }
+        months.forEach(x => { dropMonth.innerHTML += `<option value="${x.y}-${x.m}">${x.name}</option>`; });
+        updateDaysDropdown();
+    }
+
+    function updateDaysDropdown() {
+        const [year, month] = document.getElementById('dropMonth').value.split('-').map(Number);
+        const dropDay = document.getElementById('dropDay'); dropDay.innerHTML = '';
+        let cur = new Date(today);
+        while (cur <= maxDate) {
+            if (cur.getMonth() === month && cur.getFullYear() === year) {
+                const d = cur.getDate();
+                dropDay.innerHTML += `<option value="${d}">${d}</option>`;
+            }
+            cur.setDate(cur.getDate() + 1);
+        }
+    }
+
+    function openSheet(id) { 
+        document.getElementById(id).classList.add('active'); 
+        document.getElementById('commonMask').classList.add('active'); 
+        document.body.style.overflow = 'hidden'; 
+    }
+    function closeAllSheets() { 
+        ['filterSheet', 'locationSheet', 'requestSheet'].forEach(id => document.getElementById(id).classList.remove('active'));
+        document.getElementById('commonMask').classList.remove('active');
+        document.body.style.overflow = 'auto'; 
+    }
+    function openFilter() { openSheet('filterSheet'); }
+    function openLocation() { openSheet('locationSheet'); backToProvinces(); }
+    function selectProvince(p) { 
+        document.getElementById('viewProvinces').classList.add('hidden'); 
+        document.getElementById('viewAreas').classList.remove('hidden'); 
+        document.getElementById('locTitle').innerText = p; 
+        document.getElementById('locBackBtn').classList.remove('hidden'); 
+    }
+    function backToProvinces() { 
+        document.getElementById('viewProvinces').classList.remove('hidden'); 
+        document.getElementById('viewAreas').classList.add('hidden'); 
+        document.getElementById('locTitle').innerText = "เลือกจังหวัด"; 
+        document.getElementById('locBackBtn').classList.add('hidden'); 
+    }
+    function selectArea(a) { document.getElementById('mainLocationTitle').innerText = "หอพัก " + a; closeAllSheets(); }
+    function sendFinalRequest() {
+        if (!selectedRoom) return alert("กรุณาเลือกห้อง");
+        alert("ส่งคำขอเรียบร้อยแล้ว!"); closeAllSheets();
+    }
+</script>
+</body>
+</html>

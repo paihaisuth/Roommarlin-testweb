@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>โปรไฟล์ผู้ใช้งาน</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #f8fafc; color: #1e293b; overflow-x: hidden; }
+        
+        .profile-header { 
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%); 
+            min-height: 70px; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding-bottom: 20px; 
+        }
+
+        .info-card { background: white; border-radius: 24px; padding: 4px 20px; border: 1px solid #f1f5f9; margin-bottom: 20px; }
+        .data-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid #f8fafc; }
+        .data-row:last-child { border-bottom: none; }
+        
+        #overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 150; backdrop-filter: blur(4px); }
+        .bottom-sheet { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top-left-radius: 32px; border-top-right-radius: 32px; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 200; padding: 24px; max-height: 90vh; overflow-y: auto; }
+        .bottom-sheet.show { transform: translateY(0); }
+        .sheet-handle { width: 40px; height: 4px; background: #e2e8f0; border-radius: 2px; margin: 0 auto 20px; }
+
+        input, select { outline: none; appearance: none; } /* appearance-none เพื่อซ่อนลูกศรเดิมของเบราว์เซอร์ในมือถือ */
+        .custom-input { width: 100%; padding: 14px 18px; background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 16px; font-weight: 600; font-size: 14px; }
+    </style>
+</head>
+<body class="pb-32">
+
+    <header class="profile-header px-6 rounded-b-[30px] shadow-lg relative text-center">
+        <div class="pt-6 pb-2">
+            <h2 class="text-xl font-black text-white italic mb-0.5 tracking-tight">
+                <span id="headerFirstName">สมชาย</span> <span id="headerLastName">บริหารดี</span>
+            </h2>
+            <div class="inline-block px-2 py-0.5 bg-blue-500/20 rounded-full border border-blue-400/20">
+                <p class="text-blue-300 text-[8px] font-bold uppercase tracking-[2px]">Administrator</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="px-5 mt-4 relative z-10">
+        <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-[2px] ml-2 mb-2">ข้อมูลส่วนตัว</h3>
+        <div class="info-card shadow-xl shadow-slate-200/60">
+            <div class="data-row">
+                <span class="text-xs font-bold text-slate-400 uppercase">ชื่อ</span>
+                <span id="displayFirstName" class="text-sm font-bold text-slate-700">สมชาย</span>
+            </div>
+            <div class="data-row">
+                <span class="text-xs font-bold text-slate-400 uppercase">นามสกุล</span>
+                <span id="displayLastName" class="text-sm font-bold text-slate-700">บริหารดี</span>
+            </div>
+            <div class="data-row">
+                <span class="text-xs font-bold text-slate-400 uppercase">ชื่อเล่น</span>
+                <span id="displayNickname" class="text-sm font-bold text-slate-700">ชาย</span>
+            </div>
+            <div class="data-row">
+                <span class="text-xs font-bold text-slate-400 uppercase">วันเกิด</span>
+                <span id="displayBirthday" class="text-sm font-bold text-slate-700">15 พฤษภาคม 2535</span>
+            </div>
+        </div>
+
+        <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-[2px] mb-3 ml-2 mt-6">ความปลอดภัย</h3>
+        <div class="info-card shadow-sm">
+            <div class="data-row">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-500 flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+                    <span class="text-xs font-bold text-slate-400 uppercase">รหัสผ่าน</span>
+                </div>
+                <span class="text-sm font-bold text-slate-700 italic">••••••••••••</span>
+            </div>
+        </div>
+
+        <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-[2px] mb-3 ml-2 mt-6">การติดต่อ</h3>
+        <div class="info-card shadow-sm">
+            <div class="data-row">
+                <span class="text-xs font-bold text-slate-400 uppercase">เบอร์โทรศัพท์</span>
+                <span id="displayPhone" class="text-sm font-bold text-slate-700">081-234-5678</span>
+            </div>
+            <div class="data-row">
+                <span class="text-xs font-bold text-slate-400 uppercase">อีเมล</span>
+                <span id="displayEmail" class="text-sm font-bold text-slate-700">somchai@email.com</span>
+            </div>
+        </div>
+
+        <div class="mt-12 px-2 space-y-4">
+            <button onclick="openEditSheet()" class="w-full flex items-center justify-center gap-3 py-5 bg-slate-800 text-white font-bold rounded-2xl shadow-xl active:scale-[0.98] transition-all">
+                <i class="fa-solid fa-user-pen text-sm"></i>
+                แก้ไขข้อมูลโปรไฟล์
+            </button>
+            <button class="w-full py-4 text-red-500 font-bold text-sm bg-red-50 rounded-2xl border border-red-100 active:scale-[0.98] transition-all">
+                ออกจากระบบ
+            </button>
+        </div>
+    </main>
+
+    <!-- EDIT BOTTOM SHEET -->
+    <div id="overlay" onclick="closeEditSheet()"></div>
+    <div id="editSheet" class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <h3 class="text-xl font-black text-slate-800 italic uppercase mb-8 text-center">แก้ไขข้อมูลส่วนตัว</h3>
+        
+        <div class="pb-12 space-y-6">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-2">ชื่อ</label>
+                    <input id="editFirstName" type="text" class="custom-input">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-2">นามสกุล</label>
+                    <input id="editLastName" type="text" class="custom-input">
+                </div>
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-[10px] font-bold text-slate-400 uppercase ml-2">ชื่อเล่น</label>
+                <input id="editNickname" type="text" class="custom-input">
+            </div>
+
+            <!-- แก้ไขส่วนวันเกิดเป็น Dropdown -->
+            <div class="space-y-1">
+                <label class="text-[10px] font-bold text-slate-400 uppercase ml-2">วันเกิด</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <select id="editDay" class="custom-input"></select>
+                    <select id="editMonth" class="custom-input"></select>
+                    <select id="editYear" class="custom-input"></select>
+                </div>
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-[10px] font-bold text-slate-400 uppercase ml-2">เบอร์โทรศัพท์</label>
+                <input id="editPhone" type="tel" class="custom-input">
+            </div>
+
+            <div class="pt-6 border-t border-slate-100">
+                <h4 class="text-[11px] font-black text-amber-600 uppercase tracking-widest mb-4 italic">เปลี่ยนรหัสผ่านใหม่</h4>
+                <div class="space-y-3">
+                    <input id="newPass" type="password" placeholder="รหัสผ่านใหม่" class="custom-input">
+                    <input id="confirmPass" type="password" placeholder="ยืนยันรหัสผ่านใหม่" class="custom-input">
+                </div>
+            </div>
+
+            <button onclick="saveAll()" class="w-full bg-slate-800 text-white py-5 rounded-3xl font-black text-lg shadow-xl active:scale-[0.97] transition-all">
+                บันทึกการเปลี่ยนแปลง
+            </button>
+        </div>
+    </div>
+
+    <!-- NAV -->
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-100 h-20 shadow-lg z-50">
+        <div class="grid grid-cols-3 h-full text-slate-300">
+            <div class="flex items-center justify-center"><i class="fa-solid fa-chart-pie text-xl"></i></div>
+            <div class="flex items-center justify-center"><i class="fa-solid fa-house text-xl"></i></div>
+            <div class="flex items-center justify-center text-blue-600"><i class="fa-solid fa-user-circle text-2xl"></i></div>
+        </div>
+    </nav>
+
+    <script>
+        const monthsThai = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+        // สร้างข้อมูล Dropdown
+        window.onload = function() {
+            const daySel = document.getElementById('editDay');
+            const monthSel = document.getElementById('editMonth');
+            const yearSel = document.getElementById('editYear');
+
+            for (let i = 1; i <= 31; i++) daySel.options.add(new Option(i, i));
+            monthsThai.forEach(m => monthSel.options.add(new Option(m, m)));
+            
+            const curYearBE = new Date().getFullYear() + 543;
+            for (let i = curYearBE; i >= curYearBE - 100; i--) yearSel.options.add(new Option(i, i));
+        };
+
+        function openEditSheet() {
+            document.getElementById('editFirstName').value = document.getElementById('displayFirstName').innerText;
+            document.getElementById('editLastName').value = document.getElementById('displayLastName').innerText;
+            document.getElementById('editNickname').value = document.getElementById('displayNickname').innerText;
+            document.getElementById('editPhone').value = document.getElementById('displayPhone').innerText;
+
+            // ดึงค่าวันเกิดปัจจุบันมาใส่ใน Dropdown
+            const bdayParts = document.getElementById('displayBirthday').innerText.split(' ');
+            if(bdayParts.length === 3) {
+                document.getElementById('editDay').value = parseInt(bdayParts[0]);
+                document.getElementById('editMonth').value = bdayParts[1];
+                document.getElementById('editYear').value = bdayParts[2];
+            }
+
+            const sheet = document.getElementById('editSheet');
+            const overlay = document.getElementById('overlay');
+            overlay.style.display = 'block';
+            setTimeout(() => sheet.classList.add('show'), 10);
+        }
+
+        function closeEditSheet() {
+            const sheet = document.getElementById('editSheet');
+            const overlay = document.getElementById('overlay');
+            sheet.classList.remove('show');
+            setTimeout(() => overlay.style.display = 'none', 400);
+        }
+
+        function saveAll() {
+            const fname = document.getElementById('editFirstName').value;
+            const lname = document.getElementById('editLastName').value;
+            
+            // รวมค่าจาก Dropdown
+            const d = document.getElementById('editDay').value;
+            const m = document.getElementById('editMonth').value;
+            const y = document.getElementById('editYear').value;
+            const fullBday = `${d} ${m} ${y}`;
+
+            document.getElementById('displayFirstName').innerText = fname;
+            document.getElementById('displayLastName').innerText = lname;
+            document.getElementById('headerFirstName').innerText = fname;
+            document.getElementById('headerLastName').innerText = lname;
+            
+            document.getElementById('displayNickname').innerText = document.getElementById('editNickname').value;
+            document.getElementById('displayBirthday').innerText = fullBday;
+            document.getElementById('displayPhone').innerText = document.getElementById('editPhone').value;
+
+            closeEditSheet();
+            alert('อัปเดตข้อมูลสำเร็จ ✨');
+        }
+    </script>
+</body>
+</html>

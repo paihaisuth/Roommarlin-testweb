@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>จองห้องพัก (Reservation Sheet)</title>
+    
+    <!-- Google Fonts: Kanit -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS (CDN - Stable version) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { 
+            font-family: 'Kanit', sans-serif; 
+            background-color: #f3f4f6; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+        
+        /* Bottom Sheet Styles */
+        .bottom-sheet {
+            transform: translateY(100%);
+            transition: transform 0.3s ease-in-out;
+            max-height: 95vh;
+        }
+        .bottom-sheet.open {
+            transform: translateY(0);
+        }
+        .mask {
+            opacity: 0;
+            display: none;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .mask.open {
+            opacity: 1;
+            display: block;
+        }
+        /* Custom file input styling */
+        .custom-file-input {
+            width: 0.1px;
+            height: 0.1px;
+            opacity: 0;
+            overflow: hidden;
+            position: absolute;
+            z-index: -1;
+        }
+        /* Custom Color for Booking Button (Deeper Purple) */
+        .btn-booking {
+            background-color: #7c3aed; 
+        }
+        .btn-booking:hover {
+            background-color: #6d28d9;
+        }
+        .btn-booking:active {
+             background-color: #5b21b6;
+        }
+        .shadow-booking {
+             box-shadow: 0 10px 15px -3px rgba(124, 58, 237, 0.3), 0 4px 6px -2px rgba(124, 58, 237, 0.15);
+        }
+        
+        /* Date Picker Styling - Selects for Wheel Picker UX on mobile */
+        .select-date-part {
+            -webkit-appearance: none; 
+            -moz-appearance: none;
+            appearance: none;
+            background-image: none; /* Remove default arrow */
+            text-align: center;
+            font-size: 1rem;
+            height: 48px; 
+            padding-left: 0; 
+            padding-right: 0; 
+            font-weight: 500;
+        }
+        /* Placeholder styling for Selects */
+        .select-date-part:required:invalid {
+            color: #9ca3af; /* gray-400 */
+        }
+        .select-date-part option {
+            color: #1f2937; /* gray-800 */
+        }
+        /* Style for the first (placeholder) option to look like placeholder text */
+        .select-date-part option[value=""] {
+            color: #9ca3af;
+        }
+
+    </style>
+</head>
+<body class="min-h-screen relative"> 
+
+    <!-- ========================================================= -->
+    <!-- MOCK VIEW: Room List to trigger the action -->
+    <!-- ========================================================= -->
+    <div id="view-mock-list" class="h-screen p-4 bg-f3f4f6">
+        <h1 class="text-2xl font-extrabold text-gray-800 pt-10">หน้าหลัก (จำลอง)</h1>
+        <p class="text-gray-500 mb-6">กดที่ห้องเพื่อเปิดเมนูการดำเนินการ</p>
+
+        <!-- Room 101: Mock Room Card to trigger actions -->
+        <div onclick="openRoomActions('101');" class="bg-white rounded-xl p-4 shadow-md shadow-gray-200/50 border-l-4 border-l-green-500 transition-all duration-200 active:scale-[0.98] cursor-pointer overflow-hidden">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-xl font-extrabold text-green-700 leading-none">101</p>
+                    <p class="text-xs text-gray-600 mt-1 font-medium">พัดลม - 3,500 บ./ด.</p>
+                </div>
+                <div class="flex flex-col items-end">
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap bg-green-500/10 text-green-700"><i class="fa-solid fa-check mr-1"></i> ว่าง</span>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- ========================================================= -->
+    <!-- OVERLAYS: ROOM ACTION SHEET (Radius OK) -->
+    <!-- ========================================================= -->
+    <div id="roomActionMask" class="mask fixed inset-0 bg-black/60 z-50 backdrop-blur-[2px]" onclick="closeRoomActions()"></div>
+    <div id="roomActionSheet" class="bottom-sheet fixed bottom-0 left-0 w-full bg-white z-[60] rounded-t-[32px] shadow-2xl flex flex-col max-h-[85vh]">
+        <div class="flex justify-between items-center px-6 pt-6 pb-2 border-b border-gray-100">
+            <!-- HEADER: การดำเนินการสำหรับห้อง -->
+            <h2 class="text-lg font-bold text-gray-800">การดำเนินการสำหรับห้อง <span id="selectedRoomNumber" class="text-blue-600"></span></h2> 
+            <button onclick="closeRoomActions()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-4 space-y-2">
+            
+            <!-- 1. จอง (เรียก openBookingSheet) -->
+            <button onclick="handleRoomAction('จอง');" class="w-full flex items-center gap-3 p-4 rounded-xl text-left hover:bg-gray-50 active:bg-gray-100 transition">
+                <i class="fa-solid fa-bookmark text-purple-500 text-xl w-6"></i>
+                <span class="text-base font-medium text-gray-700">จองห้องพัก</span>
+            </button>
+            
+            <!-- 2. ทำสัญญา -->
+            <button onclick="handleRoomAction('ทำสัญญา');" class="w-full flex items-center gap-3 p-4 rounded-xl text-left hover:bg-gray-50 active:bg-gray-100 transition">
+                <i class="fa-solid fa-file-signature text-blue-500 text-xl w-6"></i>
+                <span class="text-base font-medium text-gray-700">ทำสัญญาเช่า</span>
+            </button>
+            
+            <!-- 3. รายการเช่า/รายละเอียด -->
+            <button onclick="handleRoomAction('รายการเช่า');" class="w-full flex items-center gap-3 p-4 rounded-xl text-left hover:bg-gray-50 active:bg-gray-100 transition">
+                <i class="fa-solid fa-list-check text-green-500 text-xl w-6"></i>
+                <span class="text-base font-medium text-gray-700">ดูรายละเอียด/รายการเช่า</span>
+            </button>
+            
+            <!-- 4. รายการซ่อม -->
+            <button onclick="handleRoomAction('รายการซ่อม');" class="w-full flex items-center gap-3 p-4 rounded-xl text-left hover:bg-gray-50 active:bg-gray-100 transition">
+                <i class="fa-solid fa-wrench text-yellow-500 text-xl w-6"></i>
+                <span class="text-base font-medium text-gray-700">จัดการรายการซ่อม</span>
+            </button>
+
+        </div>
+        <div class="p-4 border-t border-gray-100 pb-safe bg-white rounded-t-xl">
+             <button onclick="closeRoomActions()" class="w-full py-3.5 rounded-xl border border-gray-300 text-gray-600 font-bold text-sm hover:bg-gray-100">ยกเลิก</button>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- NEW OVERLAYS: BOOKING SHEET (หน้าจองห้องพัก - Select Wheel Design & Initial Date) -->
+    <!-- ========================================================= -->
+    <div id="bookingMask" class="mask fixed inset-0 bg-black/60 z-50 backdrop-blur-[2px]" onclick="closeBookingSheet()"></div>
+    <div id="bookingSheet" class="bottom-sheet fixed bottom-0 left-0 w-full bg-white z-[60] rounded-t-[32px] shadow-2xl flex flex-col max-h-[95vh]">
+        
+        <!-- HEADER: จองห้องพัก (Sticky Top, มี Radius ที่นี่เท่านั้น) -->
+        <div class="px-6 pt-6 pb-2 sticky top-0 bg-white z-10 rounded-t-[32px]">
+            <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-bookmark text-purple-600"></i> จองห้องพัก 
+                    <span id="bookingRoomNumber" class="text-purple-600 text-xl">101</span>
+                </h2> 
+                <button onclick="closeBookingSheet()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+        </div>
+        
+        <!-- CONTENT: ส่วนที่ Scroll ได้ (พื้นหลังเดียวกันกับ Header) -->
+        <div class="flex-1 overflow-y-auto px-6 space-y-6 pt-4"> 
+            
+            <!-- Room Financial Summary -->
+            <div class="p-4 bg-purple-50 rounded-xl space-y-2 border border-purple-200">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600 font-medium">ประเภทห้อง:</span>
+                    <span id="roomTypeDisplay" class="font-bold text-gray-700">พัดลม</span>
+                </div>
+                <!-- 5. แสดงค่าประกันของห้องนั้น -->
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600 font-medium">ค่าประกัน/มัดจำ (Mock Data):</span>
+                    <span id="roomDepositDisplay" class="font-bold text-indigo-700">5,000.00 บ.</span>
+                </div>
+                <!-- 6. ค่าจอง -->
+                <div>
+                    <label for="booking_fee" class="text-xs font-semibold text-gray-700 mb-1 block">6. ค่าจอง (เพื่อล็อคห้อง) <span class="text-red-500">*</span></label>
+                    <input type="number" id="booking_fee" class="w-full p-3 border border-purple-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 font-medium text-lg text-purple-700" placeholder="1000" value="1000" required>
+                </div>
+            </div>
+
+            <h3 class="text-base font-bold text-gray-700 border-b pb-1 border-gray-200 flex items-center gap-2"><i class="fa-solid fa-user-check text-blue-500"></i> ข้อมูลผู้จอง</h3>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <!-- 1. ชื่อผู้จอง -->
+                <div>
+                    <label for="reserver_fname" class="text-xs font-semibold text-gray-600 mb-1 block">1. ชื่อผู้จอง <span class="text-red-500">*</span></label>
+                    <input type="text" id="reserver_fname" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="เช่น สมชาย" required>
+                </div>
+                <!-- 2. นามสกุลผู้จอง -->
+                <div>
+                    <label for="reserver_lname" class="text-xs font-semibold text-gray-600 mb-1 block">2. นามสกุลผู้จอง <span class="text-red-500">*</span></label>
+                    <input type="text" id="reserver_lname" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="เช่น ใจดี" required>
+                </div>
+            </div>
+            
+            <!-- 3. เลขบัตรประชาชนตัวผู้จอง -->
+            <div>
+                <label for="reserver_idcard" class="text-xs font-semibold text-gray-600 mb-1 block">3. เลขบัตรประชาชน <span class="text-red-500">*</span></label>
+                <input type="text" id="reserver_idcard" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="xxxxxxxxxxxxx" maxlength="13" required>
+            </div>
+            
+            <!-- 4. วันที่จะนัดทำสัญญา (ใช้ Select 3 ช่อง: วัน/เดือน/ปี - Wheel Picker Style) -->
+            <div>
+                <label class="text-xs font-semibold text-gray-600 mb-1 block">4. วันที่นัดทำสัญญา/เข้าพัก <span class="text-red-500">*</span></label>
+                <div class="grid grid-cols-3 gap-2">
+                    <!-- Day -->
+                    <select id="select_day" onchange="updateMaxDays()" class="w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white select-date-part" required>
+                        <option value="" disabled selected hidden>วัน</option>
+                    </select>
+                    <!-- Month -->
+                    <select id="select_month" onchange="updateMaxDays()" class="w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white select-date-part" required>
+                        <option value="" disabled selected hidden>เดือน</option>
+                    </select>
+                    <!-- Year (พ.ศ.) -->
+                    <select id="select_year" onchange="updateMaxDays()" class="w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white select-date-part" required>
+                        <option value="" disabled selected hidden>ปี (พ.ศ.)</option>
+                    </select>
+                </div>
+                <p class="text-xs text-gray-400 mt-1"><i class="fa-solid fa-info-circle mr-1"></i> เมื่อแตะที่ช่องจะแสดงเป็นวงล้อหมุนในโทรศัพท์</p>
+            </div>
+
+            <h3 class="text-base font-bold text-gray-700 border-b pb-1 border-gray-200 flex items-center gap-2"><i class="fa-solid fa-money-check-dollar text-green-500"></i> หลักฐานการชำระ</h3>
+
+            <!-- 7. สลิปการจอง (File Upload & Preview) -->
+            <div>
+                <label for="booking_slip" class="text-xs font-semibold text-gray-600 mb-1 block">7. สลิปการโอนเงินค่าจอง <span class="text-red-500">*</span></label>
+                <input type="file" id="booking_slip" class="custom-file-input" accept="image/*, application/pdf" required onchange="updateFileName(this)">
+                
+                <!-- File Selection Button -->
+                <label for="booking_slip" id="file-label" class="w-full p-3 border border-gray-300 rounded-lg flex items-center justify-between cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition">
+                    <span class="text-gray-500 truncate" id="file-name-display">คลิกเพื่อเลือกไฟล์สลิป (รูปภาพ/PDF)</span>
+                    <i class="fa-solid fa-upload text-blue-500 ml-2"></i>
+                </label>
+                
+                <!-- Preview Area -->
+                <div id="slip-preview-container" class="mt-3 p-3 bg-gray-100 border border-gray-200 rounded-lg hidden">
+                    <p class="text-xs font-semibold text-gray-600 mb-2">ตัวอย่างสลิป:</p>
+                    <img id="slip-preview-image" class="w-full h-auto max-h-40 object-contain rounded-md mb-2 hidden" alt="Slip Preview">
+                    <p id="slip-preview-pdf" class="text-sm text-red-600 hidden"><i class="fa-solid fa-file-pdf mr-1"></i> ไม่สามารถแสดงตัวอย่าง PDF ได้</p>
+                    <p id="slip-preview-other" class="text-sm text-gray-600 hidden"><i class="fa-solid fa-file mr-1"></i> ไฟล์ที่เลือก: <span id="preview-file-name"></span></p>
+                </div>
+
+            </div>
+            
+        </div>
+        <div class="p-4 border-t border-gray-100 pb-safe bg-white rounded-t-xl">
+            <div class="flex gap-3">
+                <button onclick="closeBookingSheet()" class="flex-1 py-3.5 rounded-xl border border-gray-300 text-gray-600 font-bold text-sm hover:bg-gray-100">ยกเลิก</button>
+                <button onclick="submitBooking()" class="flex-[2] py-3.5 rounded-xl text-white font-bold text-sm active:scale-[0.98] transition btn-booking shadow-booking"><i class="fa-solid fa-check-circle mr-2"></i> ยืนยันการจองห้อง</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Mock data structure for rooms (for demonstration purposes)
+        const roomData = {
+            '101': { type: 'พัดลม', deposit: 5000, price: 3500 },
+            '201': { type: 'แอร์', deposit: 7000, price: 5000 },
+        };
+        
+        // =========================================================
+        // Utility Functions (Date Picker)
+        // =========================================================
+
+        const monthNames = [
+            { value: '01', name: 'มกราคม' },
+            { value: '02', name: 'กุมภาพันธ์' },
+            { value: '03', name: 'มีนาคม' },
+            { value: '04', name: 'เมษายน' },
+            { value: '05', name: 'พฤษภาคม' },
+            { value: '06', name: 'มิถุนายน' },
+            { value: '07', name: 'กรกฎาคม' },
+            { value: '08', name: 'สิงหาคม' },
+            { value: '09', name: 'กันยายน' },
+            { value: '10', name: 'ตุลาคม' },
+            { value: '11', name: 'พฤศจิกายน' },
+            { value: '12', name: 'ธันวาคม' }
+        ];
+
+        /**
+         * ตรวจสอบว่าเป็นปีอธิกสุรทิน (Leap Year) หรือไม่
+         * @param {number} year - ปี ค.ศ.
+         * @returns {boolean}
+         */
+        function isLeapYear(year) {
+            return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+        }
+
+        /**
+         * เติมข้อมูลลงใน Select Box ของวัน, เดือน, ปี
+         */
+        function populateDateSelectors() {
+            const currentYearCE = new Date().getFullYear();
+            const selectDay = document.getElementById('select_day');
+            const selectMonth = document.getElementById('select_month');
+            const selectYear = document.getElementById('select_year');
+            
+            // Clear existing options (except the hidden placeholder)
+            selectDay.innerHTML = `<option value="" disabled selected hidden>วัน</option>`;
+            selectMonth.innerHTML = `<option value="" disabled selected hidden>เดือน</option>`;
+            selectYear.innerHTML = `<option value="" disabled selected hidden>ปี (พ.ศ.)</option>`;
+
+            // 1. เติมข้อมูลเดือน
+            monthNames.forEach(month => {
+                const option = document.createElement('option');
+                option.value = month.value;
+                option.textContent = month.name;
+                selectMonth.appendChild(option);
+            });
+
+            // 2. เติมข้อมูลปี (พ.ศ.) - ย้อนหลัง 2 ปี, อนาคต 5 ปี
+            for (let i = currentYearCE + 543 - 2; i <= currentYearCE + 543 + 5; i++) {
+                const option = document.createElement('option');
+                // เก็บค่าเป็น พ.ศ. ใน Text และเป็น ค.ศ. ใน Value สำหรับการประมวลผล
+                option.value = i - 543; // Value is C.E. year
+                option.textContent = i; // Text is B.E. year
+                selectYear.appendChild(option);
+            }
+
+            // 3. เติมข้อมูลวัน (เริ่มต้น 31 วัน)
+            for (let i = 1; i <= 31; i++) {
+                const option = document.createElement('option');
+                const dayValue = String(i).padStart(2, '0');
+                option.value = dayValue;
+                option.textContent = dayValue;
+                selectDay.appendChild(option);
+            }
+        }
+        
+        /**
+         * ตั้งค่าเริ่มต้นของวันที่เป็น วันที่ เดือน ปี ปัจจุบัน (พ.ศ.)
+         */
+        function setInitialDate() {
+            const today = new Date();
+            const day = String(today.getDate()).padStart(2, '0');
+            const month = String(today.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+            const yearCE = today.getFullYear();
+            
+            // 1. Set values for Year and Month
+            document.getElementById('select_year').value = yearCE;
+            document.getElementById('select_month').value = month;
+            
+            // 2. Update max days (important for leap year/month end validation)
+            updateMaxDays();
+            
+            // 3. Set Day
+            document.getElementById('select_day').value = day;
+        }
+
+
+        /**
+         * ปรับจำนวนวันสูงสุดใน select_day ตามเดือนและปีที่เลือก
+         */
+        function updateMaxDays() {
+            const selectDay = document.getElementById('select_day');
+            const selectMonth = document.getElementById('select_month');
+            const selectYear = document.getElementById('select_year');
+            
+            const selectedMonth = parseInt(selectMonth.value);
+            const selectedYearCE = parseInt(selectYear.value); 
+            const selectedDay = parseInt(selectDay.value);
+            
+            if (isNaN(selectedMonth) || isNaN(selectedYearCE)) return;
+
+            // Day count for each month (0=placeholder, 1=Jan, ..., 12=Dec)
+            const daysInMonth = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+            let maxDays = daysInMonth[selectedMonth];
+            
+            // Adjust for February in a leap year
+            if (selectedMonth === 2 && isLeapYear(selectedYearCE)) {
+                maxDays = 29;
+            }
+
+            // Keep only the placeholder + necessary days
+            const requiredOptions = maxDays + 1;
+            
+            // Remove extra days if needed
+            while (selectDay.options.length > requiredOptions) { 
+                selectDay.remove(selectDay.options.length - 1);
+            }
+
+            // Add missing days if needed
+            while (selectDay.options.length < requiredOptions) {
+                const dayNum = selectDay.options.length; // Starts from 1 (after placeholder)
+                const option = document.createElement('option');
+                const dayValue = String(dayNum).padStart(2, '0');
+                option.value = dayValue;
+                option.textContent = dayValue;
+                selectDay.appendChild(option);
+            }
+
+            // Reset day if the current selected day exceeds new maxDays
+            if (selectedDay > maxDays) {
+                selectDay.value = ""; 
+            }
+        }
+
+        // =========================================================
+        // Shared Bottom Sheet Functions
+        // =========================================================
+        function openSheet(sheetId, maskId) {
+            const sheet = document.getElementById(sheetId);
+            const mask = document.getElementById(maskId);
+            mask.classList.add('open');
+            sheet.classList.add('open');
+            document.body.style.overflow = 'hidden'; 
+        }
+
+        function closeSheet(sheetId, maskId) {
+            const sheet = document.getElementById(sheetId);
+            const mask = document.getElementById(maskId);
+            sheet.classList.remove('open');
+            setTimeout(() => {
+                mask.classList.remove('open');
+                document.body.style.overflow = 'auto'; 
+            }, 300);
+        }
+
+        // =========================================================
+        // ROOM ACTION SHEET FUNCTIONS
+        // =========================================================
+        function openRoomActions(roomNumber) {
+            document.getElementById('selectedRoomNumber').textContent = roomNumber;
+            openSheet('roomActionSheet', 'roomActionMask');
+        }
+
+        function closeRoomActions() {
+            closeSheet('roomActionSheet', 'roomActionMask');
+        }
+
+        function handleRoomAction(action) {
+            const roomNumber = document.getElementById('selectedRoomNumber').textContent;
+            closeRoomActions(); 
+
+            if (action === 'จอง') {
+                 openBookingSheet(roomNumber);
+            } else {
+                 alert(`[ห้อง ${roomNumber}] เลือกดำเนินการ: ${action}\n\n(จำลองการเปลี่ยนหน้า)`);
+            }
+        }
+
+        // =========================================================
+        // BOOKING SHEET FUNCTIONS
+        // =========================================================
+        function openBookingSheet(roomNumber) {
+            const data = roomData[roomNumber] || { type: 'ไม่ระบุ', deposit: 0, price: 0 };
+
+            // Set room details
+            document.getElementById('bookingRoomNumber').textContent = roomNumber;
+            document.getElementById('roomTypeDisplay').textContent = data.type;
+            document.getElementById('roomDepositDisplay').textContent = data.deposit.toLocaleString('th-TH', { minimumFractionDigits: 2 }) + ' บ.';
+            
+            // Clear and set default values
+            clearBookingForm();
+            setInitialDate(); // Set to today's date when opening
+
+            openSheet('bookingSheet', 'bookingMask');
+        }
+
+        function clearBookingForm() {
+            document.getElementById('reserver_fname').value = '';
+            document.getElementById('reserver_lname').value = '';
+            document.getElementById('reserver_idcard').value = '';
+            
+            // Clear Selects
+            document.getElementById('select_day').value = ''; 
+            document.getElementById('select_month').value = ''; 
+            document.getElementById('select_year').value = ''; 
+            updateMaxDays(); // Recalculate days 
+
+            document.getElementById('booking_fee').value = '1000';
+            document.getElementById('booking_slip').value = '';
+            
+            // Clear preview area
+            document.getElementById('file-name-display').textContent = 'คลิกเพื่อเลือกไฟล์สลิป (รูปภาพ/PDF)';
+            document.getElementById('file-name-display').classList.add('text-gray-500');
+            document.getElementById('file-name-display').classList.remove('text-gray-800', 'font-medium');
+            document.getElementById('slip-preview-container').classList.add('hidden');
+        }
+
+        function closeBookingSheet() {
+            clearBookingForm();
+            closeSheet('bookingSheet', 'bookingMask');
+        }
+        
+        function submitBooking() {
+            const roomNumber = document.getElementById('bookingRoomNumber').textContent;
+            const fname = document.getElementById('reserver_fname').value.trim();
+            const lname = document.getElementById('reserver_lname').value.trim();
+            const idcard = document.getElementById('reserver_idcard').value.trim();
+            
+            const day = document.getElementById('select_day').value;
+            const month = document.getElementById('select_month').value;
+            const yearCE = document.getElementById('select_year').value; // C.E. Year
+            
+            const bookingFee = document.getElementById('booking_fee').value;
+            const depositFee = roomData[roomNumber].deposit;
+            const slipFile = document.getElementById('booking_slip').files;
+            
+            // 1. Validation for Date Selects
+            if (!day || !month || !yearCE) {
+                 alert('กรุณาเลือกวันที่นัดทำสัญญา/เข้าพักให้ครบถ้วน');
+                 return;
+            }
+
+            // 2. Final Validation
+            if (!fname || !lname || idcard.length !== 13 || !bookingFee || slipFile.length === 0) {
+                alert('กรุณากรอกข้อมูลผู้จองให้ครบถ้วนและถูกต้อง (ตรวจสอบเลขบัตรประชาชน 13 หลัก และสลิปการจอง)');
+                return;
+            }
+            
+            const contractDateCE = `${yearCE}-${month}-${day}`;
+            const selectedMonthName = monthNames.find(m => m.value === month).name;
+
+            // Simulated booking submission
+            alert(`
+                --- ยืนยันการจองสำเร็จ (จำลอง) ---
+                ห้อง: ${roomNumber} (ประเภท: ${roomData[roomNumber].type})
+                ผู้จอง: ${fname} ${lname} (ID: ${idcard})
+                ค่าประกัน: ${depositFee.toLocaleString()} บ.
+                ค่าจอง: ${bookingFee} บ.
+                วันนัดทำสัญญา: ${day} ${selectedMonthName} ${parseInt(yearCE) + 543} (พ.ศ.)
+                วันที่ประมวลผล (ค.ศ.): ${contractDateCE}
+                ไฟล์สลิป: ${slipFile[0].name}
+                
+                (ระบบจะทำการบันทึกข้อมูลและเปลี่ยนสถานะห้องเป็น "จอง")
+            `);
+
+            closeBookingSheet();
+        }
+
+
+        // =========================================================
+        // File Preview Function (Keep as is)
+        // =========================================================
+        function updateFileName(input) {
+            const fileNameDisplay = document.getElementById('file-name-display');
+            const previewContainer = document.getElementById('slip-preview-container');
+            const previewImage = document.getElementById('slip-preview-image');
+            const previewPdf = document.getElementById('slip-preview-pdf');
+            const previewOther = document.getElementById('slip-preview-other');
+            const previewFileName = document.getElementById('preview-file-name');
+
+            // Reset previews
+            previewImage.classList.add('hidden');
+            previewPdf.classList.add('hidden');
+            previewOther.classList.add('hidden');
+            previewContainer.classList.add('hidden');
+            previewImage.src = '';
+
+            if (input.files.length > 0) {
+                const file = input.files[0];
+                fileNameDisplay.textContent = file.name;
+                fileNameDisplay.classList.remove('text-gray-500');
+                fileNameDisplay.classList.add('text-gray-800', 'font-medium');
+                previewContainer.classList.remove('hidden');
+
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImage.src = e.target.result;
+                        previewImage.classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                } else if (file.type === 'application/pdf') {
+                    previewPdf.classList.remove('hidden');
+                    previewFileName.textContent = file.name;
+                } else {
+                    previewFileName.textContent = file.name;
+                    previewOther.classList.remove('hidden');
+                }
+            } else {
+                // No file selected
+                fileNameDisplay.textContent = 'คลิกเพื่อเลือกไฟล์สลิป (รูปภาพ/PDF)';
+                fileNameDisplay.classList.add('text-gray-500');
+                fileNameDisplay.classList.remove('text-gray-800', 'font-medium');
+            }
+        }
+
+        // Ensure initial state is closed and date selectors are populated (good practice)
+        document.addEventListener('DOMContentLoaded', () => {
+             // Initial close states for all sheets
+             const sheets = [
+                 { id: 'roomActionMask', sheet: 'roomActionSheet' },
+                 { id: 'bookingMask', sheet: 'bookingSheet' }
+             ];
+
+             sheets.forEach(item => {
+                 const mask = document.getElementById(item.id);
+                 const sheet = document.getElementById(item.sheet);
+                 if (mask) mask.classList.remove('open');
+                 if (sheet) sheet.classList.remove('open');
+             });
+             
+             // Populate date selectors on load
+             populateDateSelectors();
+        });
+    </script>
+
+</body>
+</html>

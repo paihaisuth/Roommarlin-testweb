@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ระบบเจ้าของหอพัก - Address Updated</title>
+    
+    <!-- Google Fonts: Kanit -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { 
+            font-family: 'Kanit', sans-serif; 
+            background-color: #f3f4f6; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+
+        /* Animation */
+        .bottom-sheet { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateY(100%); }
+        .bottom-sheet.active { transform: translateY(0); }
+        .mask { transition: opacity 0.3s; opacity: 0; pointer-events: none; }
+        .mask.active { opacity: 1; pointer-events: auto; }
+        
+        /* Fade Transition */
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Checkbox Style */
+        .facility-checkbox:checked + div {
+            background-color: #eff6ff;
+            border-color: #3b82f6;
+            color: #2563eb;
+        }
+        .facility-checkbox:checked + div i { color: #2563eb; }
+    </style>
+</head>
+<body class="min-h-screen relative overflow-hidden"> 
+
+    <!-- ========================================================= -->
+    <!-- VIEW 1: DASHBOARD (หน้าหลัก) -->
+    <!-- ========================================================= -->
+    <div id="view-dashboard" class="fade-in h-screen overflow-y-auto pb-24 relative">
+        
+        <main class="px-4 pt-14 space-y-5">
+            <div class="px-1 mb-2">
+                <h1 class="text-2xl font-bold text-gray-800">หอพักของฉัน</h1>
+            </div>
+
+            <!-- Card 1: The Campus Condo (เพิ่ม onclick) -->
+            <div onclick="openDormActions('TheCampusCondo')" class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 active:scale-[0.99] transition-transform duration-200 cursor-pointer">
+                <div class="flex gap-4">
+                    <div class="relative w-24 rounded-xl overflow-hidden flex-shrink-0 bg-gray-200">
+                        <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=2070&auto=format&fit=crop" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1 min-w-0 flex flex-col justify-center">
+                        <div class="flex justify-between items-start">
+                            <h3 class="font-bold text-gray-800 text-base truncate">The Campus Condo</h3>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-0.5 mb-3"><i class="fa-solid fa-location-dot text-gray-300"></i> ซอยรังสิตภิรมย์</p>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="flex justify-between text-[10px] mb-1"><span class="text-gray-500"><i class="fa-solid fa-user text-green-500 mr-1"></i> ผู้เช่า 45/50</span><span class="text-green-600 font-bold">90%</span></div>
+                                <div class="w-full bg-gray-100 rounded-full h-1.5 mb-1"><div class="bg-green-500 h-1.5 rounded-full" style="width: 90%"></div></div>
+                                <p class="text-[9px] text-gray-400 pl-4">Standard: 30 • Suite: 15</p>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[10px] mb-1"><span class="text-gray-500"><i class="fa-solid fa-user-clock text-blue-500 mr-1"></i> จองใหม่ 3 ราย</span><span class="text-blue-600 font-bold">15%</span></div>
+                                <div class="w-full bg-gray-100 rounded-full h-1.5"><div class="bg-blue-500 h-1.5 rounded-full" style="width: 15%"></div></div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[10px] mb-1"><span class="text-gray-500"><i class="fa-solid fa-file-invoice-dollar text-red-500 mr-1"></i> ค้างค่าเช่า 5 ห้อง</span><span class="text-red-500 font-bold">10%</span></div>
+                                <div class="w-full bg-gray-100 rounded-full h-1.5"><div class="bg-red-500 h-1.5 rounded-full" style="width: 10%"></div></div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[10px] mb-1"><span class="text-gray-500"><i class="fa-solid fa-screwdriver-wrench text-yellow-500 mr-1"></i> แจ้งซ่อม 2 รายการ</span><span class="text-yellow-600 font-bold">4%</span></div>
+                                <div class="w-full bg-gray-100 rounded-full h-1.5"><div class="bg-yellow-400 h-1.5 rounded-full" style="width: 4%"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: หอพักป้าสมร (เพิ่ม onclick) -->
+            <div onclick="openDormActions('BaanPaSomorn')" class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 active:scale-[0.99] transition-transform duration-200 cursor-pointer">
+                <div class="flex gap-4">
+                    <div class="relative w-24 rounded-xl overflow-hidden flex-shrink-0 bg-gray-200">
+                        <img src="https://images.unsplash.com/photo-1598928506311-c55ded91a20c?q=80&w=2070&auto=format&fit=crop" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1 min-w-0 flex flex-col justify-center">
+                        <div class="flex justify-between items-start">
+                            <h3 class="font-bold text-gray-800 text-base truncate">หอพักป้าสมร</h3>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-0.5 mb-3"><i class="fa-solid fa-location-dot text-gray-300"></i> เมืองเอก</p>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="flex justify-between text-[10px] mb-1"><span class="text-gray-500"><i class="fa-solid fa-user text-green-500 mr-1"></i> ผู้เช่า 12/20</span><span class="text-green-600 font-bold">60%</span></div>
+                                <div class="w-full bg-gray-100 rounded-full h-1.5 mb-1"><div class="bg-green-500 h-1.5 rounded-full" style="width: 60%"></div></div>
+                                <p class="text-[9px] text-gray-400 pl-4">พัดลม: 10 • แอร์: 2</p>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[10px] mb-1"><span class="text-gray-500"><i class="fa-solid fa-user-clock text-blue-500 mr-1"></i> จองใหม่ 1 ราย</span><span class="text-blue-600 font-bold">5%</span></div>
+                                <div class="w-full bg-gray-100 rounded-full h-1.5"><div class="bg-blue-500 h-1.5 rounded-full" style="width: 5%"></div></div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[10px] mb-1"><span class="text-gray-500"><i class="fa-solid fa-file-invoice-dollar text-gray-400 mr-1"></i> ค้างค่าเช่า 0 ห้อง</span><span class="text-green-500 font-bold">0%</span></div>
+                                <div class="w-full bg-gray-100 rounded-full h-1.5"><div class="bg-gray-300 h-1.5 rounded-full" style="width: 0%"></div></div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[10px] mb-1"><span class="text-gray-500"><i class="fa-solid fa-screwdriver-wrench text-yellow-500 mr-1"></i> แจ้งซ่อม 4 รายการ</span><span class="text-red-500 font-bold">20%</span></div>
+                                <div class="w-full bg-gray-100 rounded-full h-1.5"><div class="bg-red-400 h-1.5 rounded-full" style="width: 20%"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="h-20"></div>
+        </main>
+
+        <!-- FAB Buttons -->
+        <div class="fixed bottom-24 right-5 z-30 flex flex-col gap-3 items-end">
+            <button onclick="openFilter()" class="w-12 h-12 bg-white text-gray-600 rounded-full shadow-lg border border-gray-100 flex items-center justify-center transition active:scale-90 hover:bg-gray-50">
+                <i class="fa-solid fa-sliders text-lg"></i>
+            </button>
+            <button onclick="switchView('add')" class="w-14 h-14 bg-blue-600 text-white rounded-full shadow-xl shadow-blue-500/30 flex items-center justify-center transition active:scale-90 hover:bg-blue-700">
+                <i class="fa-solid fa-plus text-2xl"></i>
+            </button>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 z-40 pb-safe shadow-[0_-4px_10px_rgba(0,0,0,0.02)]">
+            <div class="grid grid-cols-3 h-16">
+                <a href="#" class="flex flex-col items-center justify-center text-gray-400 hover:text-blue-600 transition active:scale-95 group">
+                    <i class="fa-solid fa-chart-pie text-xl mb-1 group-hover:scale-110 transition"></i>
+                    <span class="text-[10px] font-medium">รายงานผล</span>
+                </a>
+                <a href="#" class="flex flex-col items-center justify-center text-blue-600 relative">
+                    <i class="fa-solid fa-house text-xl mb-1 mt-1"></i>
+                    <span class="text-[10px] font-bold">หน้าหลัก</span>
+                </a>
+                <a href="#" class="flex flex-col items-center justify-center text-gray-400 hover:text-blue-600 transition active:scale-95 group">
+                    <i class="fa-solid fa-user-circle text-xl mb-1 group-hover:scale-110 transition"></i>
+                    <span class="text-[10px] font-medium">โปรไฟล์</span>
+                </a>
+            </div>
+        </nav>
+        
+        <div class="h-[env(safe-area-inset-bottom)] bg-white fixed bottom-0 w-full z-30"></div>
+    </div>
+
+
+    <!-- ========================================================= -->
+    <!-- VIEW 2: ADD DORM (หน้าเพิ่มหอพักใหม่) -->
+    <!-- ========================================================= -->
+    <div id="view-add-dorm" class="hidden fade-in h-screen overflow-y-auto pb-32 bg-f3f4f6">
+        
+        <!-- เนื้อหา (เริ่มที่หัวข้อเลย) -->
+        <main class="px-4 pt-10 space-y-5">
+            
+            <h1 class="text-2xl font-bold text-gray-800 px-1">เพิ่มหอพักใหม่</h1>
+
+            <form id="addDormForm">
+                <!-- Section 1: รูปภาพ -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                    <label class="block text-sm font-bold text-gray-800 mb-3">รูปภาพหอพัก <span class="text-red-500">*</span></label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="col-span-3 h-48 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center text-gray-400 bg-gray-50 cursor-pointer hover:bg-gray-100 transition relative overflow-hidden group">
+                            <input type="file" class="absolute inset-0 opacity-0 cursor-pointer z-10">
+                            <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=2070&auto=format&fit=crop" class="absolute inset-0 w-full h-full object-cover opacity-70">
+                            <i class="fa-regular fa-image text-3xl mb-2 group-hover:scale-110 transition text-white drop-shadow-lg"></i>
+                            <span class="text-xs text-white font-semibold drop-shadow-lg">อัปโหลดรูปหลัก</span>
+                        </div>
+                        <div class="h-20 border border-gray-200 rounded-xl flex items-center justify-center text-gray-300 bg-gray-50 cursor-pointer relative"><input type="file" class="absolute inset-0 opacity-0 cursor-pointer"><i class="fa-solid fa-plus"></i></div>
+                        <div class="h-20 border border-gray-200 rounded-xl flex items-center justify-center text-gray-300 bg-gray-50 cursor-pointer relative"><input type="file" class="absolute inset-0 opacity-0 cursor-pointer"><i class="fa-solid fa-plus"></i></div>
+                        <div class="h-20 border border-gray-200 rounded-xl flex items-center justify-center text-gray-300 bg-gray-50 cursor-pointer relative"><input type="file" class="absolute inset-0 opacity-0 cursor-pointer"><i class="fa-solid fa-plus"></i></div>
+                    </div>
+                </div>
+
+                <!-- Section 2: ข้อมูลทั่วไป (ปรับปรุงเรื่องที่อยู่) -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mt-4">
+                    <h2 class="text-sm font-bold text-gray-800 mb-4 border-l-4 border-blue-500 pl-2">ข้อมูลทั่วไป</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">ชื่อหอพัก</label>
+                            <input type="text" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm" placeholder="เช่น หอพักบ้านสุขใจ">
+                        </div>
+                        
+                        <!-- ที่อยู่เเบ่งฟิลด์ -->
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">บ้านเลขที่ / ซอย / ถนน</label>
+                            <input type="text" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm" placeholder="ระบุรายละเอียด">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">จังหวัด</label>
+                                <select class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                                    <option>ปทุมธานี</option><option>กรุงเทพมหานคร</option><option>นนทบุรี</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">อำเภอ/เขต</label>
+                                <select class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                                    <option>เมือง</option><option>คลองหลวง</option><option>ธัญบุรี</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">ตำบล/แขวง</label>
+                                <input type="text" class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm" placeholder="ระบุตำบล">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">รหัสไปรษณีย์</label>
+                                <input type="number" class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm" placeholder="12xxx">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><label class="block text-xs font-medium text-gray-500 mb-1">โซน (เช่น ม.รังสิต)</label><select class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"><option>รอบ ม.รังสิต</option><option>เมืองเอก</option><option>หลักหก</option></select></div>
+                            <div><label class="block text-xs font-medium text-gray-500 mb-1">เบอร์ติดต่อ</label><input type="tel" class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm" placeholder="08x-xxx-xxxx"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: ราคาและสัญญา (แยกประเภทชัดเจน) -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mt-4">
+                    <h2 class="text-sm font-bold text-gray-800 mb-4 border-l-4 border-green-500 pl-2">ราคาและสัญญา</h2>
+                    
+                    <div class="space-y-6">
+                        <!-- 3.1 ห้องพัดลม -->
+                        <div class="bg-green-50/50 p-4 rounded-xl border border-green-100">
+                            <div class="flex items-center gap-2 mb-3">
+                                <i class="fa-solid fa-fan text-green-600"></i>
+                                <span class="text-sm font-bold text-gray-700">1. ห้องพัดลม</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-500 mb-1">ค่าเช่า (บาท/เดือน)</label>
+                                    <input type="number" class="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none text-sm" placeholder="3500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-500 mb-1">เงินประกัน</label>
+                                    <input type="number" class="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none text-sm" placeholder="5000">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3.2 ห้องแอร์ -->
+                        <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                            <div class="flex items-center gap-2 mb-3">
+                                <i class="fa-regular fa-snowflake text-blue-600"></i>
+                                <span class="text-sm font-bold text-gray-700">2. ห้องแอร์</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-500 mb-1">ค่าเช่า (บาท/เดือน)</label>
+                                    <input type="number" class="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm" placeholder="5000">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-500 mb-1">เงินประกัน</label>
+                                    <input type="number" class="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm" placeholder="10000">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: ค่าน้ำ-ไฟ -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mt-4">
+                    <h2 class="text-sm font-bold text-gray-800 mb-4 border-l-4 border-yellow-500 pl-2">อัตราค่าน้ำ-ไฟ</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-3 bg-yellow-50 rounded-xl border border-yellow-100">
+                            <label class="block text-xs font-bold text-yellow-700 mb-1"><i class="fa-solid fa-bolt"></i> ค่าไฟ (ต่อหน่วย)</label>
+                            <div class="relative"><input type="number" class="w-full pl-3 pr-10 py-2 bg-white border border-yellow-200 rounded-lg focus:outline-none text-sm" placeholder="7"><span class="absolute right-3 top-2 text-xs text-gray-400">บาท</span></div>
+                        </div>
+                        <div class="p-3 bg-blue-50 rounded-xl border border-blue-100">
+                            <label class="block text-xs font-bold text-blue-700 mb-1"><i class="fa-solid fa-faucet-drip"></i> ค่าน้ำ (ต่อหน่วย)</label>
+                            <div class="relative"><input type="number" class="w-full pl-3 pr-10 py-2 bg-white border border-blue-200 rounded-lg focus:outline-none text-sm" placeholder="18"><span class="absolute right-3 top-2 text-xs text-gray-400">บาท</span></div>
+                            <div class="mt-2 flex items-center gap-1"><input type="checkbox" class="rounded text-blue-500"><span class="text-[10px] text-gray-500">เหมาจ่ายรายเดือน</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 5: สิ่งอำนวยความสะดวก -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mt-4">
+                    <h2 class="text-sm font-bold text-gray-800 mb-4 border-l-4 border-purple-500 pl-2">สิ่งอำนวยความสะดวก</h2>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="cursor-pointer group"><input type="checkbox" class="hidden facility-checkbox"><div class="border border-gray-200 rounded-lg py-2 px-1 text-center transition"><i class="fa-solid fa-wifi text-gray-400 mb-1 block"></i><span class="text-[10px] text-gray-600">Wifi ฟรี</span></div></label>
+                        <label class="cursor-pointer group"><input type="checkbox" class="hidden facility-checkbox"><div class="border border-gray-200 rounded-lg py-2 px-1 text-center transition"><i class="fa-regular fa-snowflake text-gray-400 mb-1 block"></i><span class="text-[10px] text-gray-600">แอร์</span></div></label>
+                        <label class="cursor-pointer group"><input type="checkbox" class="hidden facility-checkbox"><div class="border border-gray-200 rounded-lg py-2 px-1 text-center transition"><i class="fa-solid fa-bed text-gray-400 mb-1 block"></i><span class="text-[10px] text-gray-600">เฟอร์ฯครบ</span></div></label>
+                        <label class="cursor-pointer group"><input type="checkbox" class="hidden facility-checkbox"><div class="border border-gray-200 rounded-lg py-2 px-1 text-center transition"><i class="fa-solid fa-square-parking text-gray-400 mb-1 block"></i><span class="text-[10px] text-gray-600">ที่จอดรถ</span></div></label>
+                        <label class="cursor-pointer group"><input type="checkbox" class="hidden facility-checkbox"><div class="border border-gray-200 rounded-lg py-2 px-1 text-center transition"><i class="fa-solid fa-key text-gray-400 mb-1 block"></i><span class="text-[10px] text-gray-600">คีย์การ์ด</span></div></label>
+                        <label class="cursor-pointer group"><input type="checkbox" class="hidden facility-checkbox"><div class="border border-gray-200 rounded-lg py-2 px-1 text-center transition"><i class="fa-solid fa-video text-gray-400 mb-1 block"></i><span class="text-[10px] text-gray-600">CCTV</span></div></label>
+                        <label class="cursor-pointer group"><input type="checkbox" class="hidden facility-checkbox"><div class="border border-gray-200 rounded-lg py-2 px-1 text-center transition"><i class="fa-solid fa-elevator text-gray-400 mb-1 block"></i><span class="text-[10px] text-gray-600">ลิฟต์</span></div></label>
+                        <label class="cursor-pointer group"><input type="checkbox" class="hidden facility-checkbox"><div class="border border-gray-200 rounded-lg py-2 px-1 text-center transition"><i class="fa-solid fa-jug-detergent text-gray-400 mb-1 block"></i><span class="text-[10px] text-gray-600">เครื่องซักผ้า</span></div></label>
+                        <label class="cursor-pointer group"><input type="checkbox" class="hidden facility-checkbox"><div class="border border-gray-200 rounded-lg py-2 px-1 text-center transition"><i class="fa-solid fa-paw text-gray-400 mb-1 block"></i><span class="text-[10px] text-gray-600">เลี้ยงสัตว์</span></div></label>
+                    </div>
+                </div>
+            </form>
+        </main>
+
+        <!-- 3. Fixed Bottom Action Bar (2 ปุ่ม: ยกเลิก / สร้าง) -->
+        <div class="fixed bottom-0 w-full bg-white border-t border-gray-200 px-4 pt-3 pb-safe z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+            <div class="flex gap-3">
+                <button onclick="switchView('dashboard')" class="flex-1 bg-white border border-gray-300 text-gray-700 font-bold py-3.5 rounded-xl hover:bg-gray-50 transition active:scale-[0.98]">
+                    ยกเลิก
+                </button>
+                <button onclick="alert('สร้างหอพักสำเร็จ!'); switchView('dashboard');" class="flex-[2] bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-500/30 transition active:scale-[0.98]">
+                    สร้างหอพัก
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ========================================================= -->
+    <!-- OVERLAYS: FILTER SHEET (SHARED) -->
+    <!-- ========================================================= -->
+    <div id="filterMask" class="mask fixed inset-0 bg-black/60 z-50 backdrop-blur-[2px]" onclick="closeFilter()"></div>
+    <div id="filterSheet" class="bottom-sheet fixed bottom-0 left-0 w-full bg-white z-[60] rounded-t-[32px] shadow-2xl flex flex-col max-h-[85vh]">
+        <div class="flex justify-between items-center px-6 pt-6 pb-2">
+            <h2 class="text-lg font-bold text-gray-800">ตัวกรอง & จัดเรียง</h2>
+            <button onclick="closeFilter()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-4 space-y-6">
+            <div>
+                <label class="text-sm font-semibold text-gray-700 mb-3 block flex items-center gap-2"><i class="fa-solid fa-arrow-down-short-wide text-blue-500"></i> จัดเรียงตาม</label>
+                <div class="space-y-2">
+                    <label class="cursor-pointer flex items-center justify-between p-3 rounded-xl border border-gray-200 has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 transition"><span class="text-sm text-gray-700">ทั่วไป (ค่าเริ่มต้น)</span><input type="radio" name="sort" class="accent-blue-600" checked></label>
+                    <label class="cursor-pointer flex items-center justify-between p-3 rounded-xl border border-gray-200 has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 transition"><span class="text-sm text-gray-700">การจอง : มาก -> น้อย</span><input type="radio" name="sort" class="accent-blue-600"></label>
+                    <label class="cursor-pointer flex items-center justify-between p-3 rounded-xl border border-gray-200 has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 transition"><span class="text-sm text-gray-700">ค้างค่าเช่า : มาก -> น้อย</span><input type="radio" name="sort" class="accent-blue-600"></label>
+                    <label class="cursor-pointer flex items-center justify-between p-3 rounded-xl border border-gray-200 has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 transition"><span class="text-sm text-gray-700">แจ้งซ่อม : มาก -> น้อย</span><input type="radio" name="sort" class="accent-blue-600"></label>
+                    <label class="cursor-pointer flex items-center justify-between p-3 rounded-xl border border-gray-200 has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 transition"><span class="text-sm text-gray-700">มีห้องว่าง : มาก -> น้อย</span><input type="radio" name="sort" class="accent-blue-600"></label>
+                </div>
+            </div>
+        </div>
+        <div class="p-4 border-t border-gray-100 pb-safe bg-white rounded-t-xl">
+            <div class="flex gap-3">
+                <button onclick="closeFilter()" class="flex-1 py-3.5 rounded-2xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50">ล้างค่า</button>
+                <button onclick="closeFilter()" class="flex-[2] py-3.5 rounded-2xl bg-gray-900 text-white font-bold text-sm shadow-lg active:scale-95 transition">บันทึก</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ========================================================= -->
+    <!-- OVERLAYS: DORM ACTION SHEET (NEWLY ADDED) -->
+    <!-- ========================================================= -->
+    <div id="dormActionMask" class="mask fixed inset-0 bg-black/60 z-50 backdrop-blur-[2px]" onclick="closeDormActions()"></div>
+    <div id="dormActionSheet" class="bottom-sheet fixed bottom-0 left-0 w-full bg-white z-[60] rounded-t-[32px] shadow-2xl flex flex-col max-h-[85vh]">
+        <div class="p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-5">เลือกการดำเนินการ</h2>
+            <div class="space-y-3">
+                <!-- 1. จัดการห้อง -->
+                <button onclick="alert('ไปยังหน้าจัดการห้อง (สำหรับ ' + document.getElementById('dormActionSheet').dataset.dormName + ')'); closeDormActions();" class="w-full flex items-center p-4 bg-blue-50 border border-blue-200 rounded-xl hover:bg-blue-100 transition active:scale-[0.99]">
+                    <div class="w-10 h-10 bg-blue-600/10 text-blue-600 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fa-solid fa-bed text-xl"></i>
+                    </div>
+                    <span class="text-base font-semibold text-gray-800">1. จัดการห้องพัก</span>
+                    <i class="fa-solid fa-chevron-right text-sm text-gray-400 ml-auto"></i>
+                </button>
+                
+                <!-- 2. แก้ไขรายละเอียดหอ -->
+                <button onclick="alert('ไปยังหน้าแก้ไขรายละเอียดหอ (สำหรับ ' + document.getElementById('dormActionSheet').dataset.dormName + ')'); closeDormActions();" class="w-full flex items-center p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 transition active:scale-[0.99]">
+                    <div class="w-10 h-10 bg-gray-600/10 text-gray-600 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fa-solid fa-pen-to-square text-xl"></i>
+                    </div>
+                    <span class="text-base font-semibold text-gray-800">2. แก้ไขรายละเอียดหอ</span>
+                    <i class="fa-solid fa-chevron-right text-sm text-gray-400 ml-auto"></i>
+                </button>
+            </div>
+        </div>
+        <div class="p-4 border-t border-gray-100 pb-safe bg-white rounded-t-xl">
+            <button onclick="closeDormActions()" class="w-full py-3.5 rounded-2xl border border-gray-300 text-gray-700 font-bold text-sm hover:bg-gray-50 active:scale-[0.98]">
+                ยกเลิก
+            </button>
+        </div>
+    </div>
+
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- 1. View Switching Logic ---
+        function switchView(viewName) {
+            const dashboard = document.getElementById('view-dashboard');
+            const addDorm = document.getElementById('view-add-dorm');
+
+            if (viewName === 'add') {
+                dashboard.classList.add('hidden');
+                addDorm.classList.remove('hidden');
+                window.scrollTo(0, 0); // Scroll to top
+            } else {
+                addDorm.classList.add('hidden');
+                dashboard.classList.remove('hidden');
+            }
+        }
+
+        // --- 2. Filter Sheet Logic ---
+        const filterSheet = document.getElementById('filterSheet');
+        const filterMask = document.getElementById('filterMask');
+
+        function openFilter() {
+            filterSheet.classList.add('active');
+            filterMask.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeFilter() {
+            filterSheet.classList.remove('active');
+            filterMask.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+        
+        // --- 3. Dorm Action Sheet Logic (NEWLY ADDED) ---
+        const dormActionSheet = document.getElementById('dormActionSheet');
+        const dormActionMask = document.getElementById('dormActionMask');
+
+        function openDormActions(dormName) {
+            // Set dorm name (or ID) to the sheet for context, useful for real app logic
+            dormActionSheet.dataset.dormName = dormName; 
+            
+            dormActionSheet.classList.add('active');
+            dormActionMask.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDormActions() {
+            dormActionSheet.classList.remove('active');
+            dormActionMask.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+    </script>
+
+</body>
+</html>

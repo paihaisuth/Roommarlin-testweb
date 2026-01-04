@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Room Detail - No Counts</title>
+    
+    <!-- Google Fonts: Kanit -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; }
+        
+        /* Tab Animation */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Bottom Sheet Style */
+        .bottom-sheet { transform: translateY(100%); transition: transform 0.3s ease-in-out; max-height: 85vh; }
+        .bottom-sheet.open { transform: translateY(0); }
+        .mask { opacity: 0; display: none; transition: opacity 0.3s ease-in-out; }
+        .mask.open { opacity: 1; display: block; }
+
+        /* FAB Rotate */
+        #fab-menu { transition: all 0.3s ease-in-out; transform: scale(0); opacity: 0; pointer-events: none; bottom: 80px; }
+        #fab-menu.open { transform: scale(1); opacity: 1; pointer-events: auto; }
+        .fab-rotate { transition: transform 0.3s ease; }
+        .fab-rotate.open { transform: rotate(135deg); }
+
+        /* Custom Scrollbar hide */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="min-h-screen relative overflow-hidden"> 
+
+    <div id="view-room-detail" class="h-screen flex flex-col pb-24 bg-white">
+        
+        <!-- HEADER (ห้อง 101 ไม่มีปุ่มคัดกรอง) -->
+        <header class="w-full pt-8 px-6 flex justify-between items-center">
+            <h1 class="text-2xl font-extrabold text-slate-800">
+                ห้อง <span class="text-blue-600">101</span>
+            </h1>
+            <button onclick="history.back()" class="text-gray-300 hover:text-gray-500 transition">
+                <i class="fa-solid fa-circle-chevron-left text-2xl"></i>
+            </button>
+        </header>
+        
+        <!-- TABS CONTAINER (Pill Style - ตัดตัวเลขออกแล้ว) -->
+        <div class="px-4 mt-5">
+            <div class="flex bg-gray-100 p-1 rounded-[24px] items-center shadow-inner">
+                <button onclick="switchTab('viewing')" id="tab-viewing" class="tab-btn flex-1 py-3 rounded-[20px] text-sm font-bold transition-all duration-300">
+                    นัดดู
+                </button>
+                <button onclick="switchTab('booking')" id="tab-booking" class="tab-btn flex-1 py-3 rounded-[20px] text-sm font-bold transition-all duration-300">
+                    จอง
+                </button>
+                <button onclick="switchTab('contract')" id="tab-contract" class="tab-btn flex-1 py-3 rounded-[20px] text-sm font-bold transition-all duration-300">
+                    สัญญา
+                </button>
+            </div>
+        </div>
+
+        <!-- MAIN LIST AREA -->
+        <main class="flex-1 overflow-y-auto px-4 pt-6 space-y-4 bg-gray-50 mt-4 rounded-t-[32px] shadow-[0_-8px_30px_rgb(0,0,0,0.04)] no-scrollbar">
+            
+            <div id="content-viewing" class="tab-content space-y-3"></div>
+            <div id="content-booking" class="tab-content space-y-3"></div>
+            <div id="content-contract" class="tab-content space-y-3"></div>
+
+            <div class="h-10"></div>
+        </main>
+
+        <!-- Global Bottom Nav -->
+        <nav class="fixed bottom-0 w-full bg-white border-t border-gray-100 z-40 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+            <div class="grid grid-cols-3 h-16">
+                <a href="#" class="flex flex-col items-center justify-center text-gray-300"><i class="fa-solid fa-chart-pie text-xl"></i></a>
+                <a href="#" class="flex flex-col items-center justify-center text-blue-600"><i class="fa-solid fa-house text-xl"></i></a>
+                <a href="#" class="flex flex-col items-center justify-center text-gray-300"><i class="fa-solid fa-user-circle text-xl"></i></a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- COMBINED FAB -->
+    <div class="fixed bottom-24 right-5 z-50 flex flex-col items-end gap-3">
+        <div id="fab-menu" class="flex flex-col items-end gap-3">
+            <button onclick="toggleFAB(); alert('หน้าเพิ่มนัดดู');" class="flex items-center gap-3">
+                <span class="bg-slate-800 text-white text-[11px] px-3 py-1.5 rounded-lg shadow-lg">เพิ่มการนัดดู</span>
+                <div class="w-12 h-12 bg-emerald-500 text-white rounded-full shadow-lg flex items-center justify-center"><i class="fa-solid fa-eye"></i></div>
+            </button>
+            <button onclick="toggleFAB(); alert('หน้าบันทึกการจอง');" class="flex items-center gap-3">
+                <span class="bg-slate-800 text-white text-[11px] px-3 py-1.5 rounded-lg shadow-lg">บันทึกการจอง</span>
+                <div class="w-12 h-12 bg-purple-500 text-white rounded-full shadow-lg flex items-center justify-center"><i class="fa-solid fa-bookmark"></i></div>
+            </button>
+            <button onclick="toggleFAB(); alert('หน้าทำสัญญาใหม่');" class="flex items-center gap-3">
+                <span class="bg-slate-800 text-white text-[11px] px-3 py-1.5 rounded-lg shadow-lg">ทำสัญญาใหม่</span>
+                <div class="w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center"><i class="fa-solid fa-file-contract text-xl"></i></div>
+            </button>
+        </div>
+        <button onclick="toggleFAB()" class="w-16 h-16 bg-slate-900 text-white rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-transform">
+            <i id="fab-icon" class="fa-solid fa-plus text-2xl fab-rotate"></i>
+        </button>
+    </div>
+
+    <!-- ACTION SHEET -->
+    <div id="actionMask" class="mask fixed inset-0 bg-black/60 z-[60] backdrop-blur-[2px]" onclick="closeAction()"></div>
+    <div id="actionSheet" class="bottom-sheet fixed bottom-0 left-0 w-full bg-white z-[70] rounded-t-[32px] shadow-2xl flex flex-col overflow-hidden">
+        <div class="flex justify-between items-center px-6 pt-7 pb-3 border-b border-gray-100">
+            <h2 class="text-lg font-bold text-gray-800">จัดการข้อมูล: <span id="sel-name" class="text-blue-600"></span></h2> 
+            <button onclick="closeAction()" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="action-options" class="p-6 space-y-3"></div>
+        <div class="p-5 pb-safe bg-white text-center">
+            <button onclick="closeAction()" class="text-gray-400 font-bold text-sm tracking-wide">ยกเลิก/ปิด</button>
+        </div>
+    </div>
+
+    <script>
+        // --- MOCK DATA (All Cases) ---
+        const roomData = {
+            'viewing': [
+                { id: 1, name: 'คุณธนกฤต', status: 'คำขอ', date: 'นัดหมาย: วันนี้, 14:00 น.', type: 'txt-req', clickable: true },
+                { id: 2, name: 'คุณสายใจ', status: 'อนุมัติ', date: 'นัดหมาย: พรุ่งนี้, 10:30 น.', type: 'txt-app', clickable: false },
+                { id: 3, name: 'คุณสมชาย', status: 'ไม่อนุมัติ', date: 'นัดหมาย: 22 ธ.ค. 68', type: 'txt-rej', clickable: false }
+            ],
+            'booking': [
+                { id: 4, name: 'คุณวิภาวดี', status: 'คำขอ', info: 'มัดจำ: 2,000 บ.', viewDate: 'วันนัดดู: 25 ธ.ค. 68', type: 'txt-req', clickable: true },
+                { id: 5, name: 'คุณเอกลักษณ์', status: 'อนุมัติ', info: 'มัดจำ: 5,000 บ.', viewDate: 'วันนัดดู: 28 ธ.ค. 68', type: 'txt-app', clickable: true },
+                { id: 6, name: 'คุณนพดล', status: 'ไม่อนุมัติ', info: 'รอคืนมัดจำ', viewDate: 'ยกเลิกแล้ว', type: 'txt-rej', clickable: false }
+            ],
+            'contract': [
+                { id: 7, name: 'คุณนรินทร์', status1: 'อยู่ในสัญญา', status2: 'ค้างค่าเช่า', price: '4,500 บ./ด.', s1: 's-active', s2: 's-overdue', clickable: true },
+                { id: 8, name: 'คุณแพรววา', status1: 'อยู่ในสัญญา', status2: 'ไม่ถึงกำหนด', price: '4,500 บ./ด.', s1: 's-active', s2: 's-notdue', clickable: true },
+                { id: 9, name: 'คุณกิตติศักดิ์', status1: 'หมดสัญญา', status2: '', price: 'ประวัติปี 2567', s1: 's-expired', s2: '', clickable: true }
+            ]
+        };
+
+        const styles = {
+            'txt-req': 'bg-orange-50 text-orange-600 border-l-orange-500',
+            'txt-app': 'bg-emerald-50 text-emerald-600 border-l-emerald-500',
+            'txt-rej': 'bg-red-50 text-red-600 border-l-red-500',
+            's-active': 'bg-blue-50 text-blue-600 border-l-blue-600',
+            's-overdue': 'bg-red-600 text-white shadow-sm',
+            's-notdue': 'bg-slate-100 text-slate-500',
+            's-expired': 'bg-gray-100 text-gray-400 border-l-gray-300'
+        };
+
+        function switchTab(role) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'shadow-md', 'text-slate-800');
+                btn.classList.add('text-slate-500');
+            });
+            const activeBtn = document.getElementById(`tab-${role}`);
+            activeBtn.classList.add('bg-white', 'shadow-md', 'text-slate-800');
+            activeBtn.classList.remove('text-slate-500');
+
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(`content-${role}`).classList.add('active');
+        }
+
+        function toggleFAB() {
+            document.getElementById('fab-menu').classList.toggle('open');
+            document.getElementById('fab-icon').classList.toggle('open');
+        }
+
+        function closeAction() {
+            document.getElementById('actionSheet').classList.remove('open');
+            setTimeout(() => { document.getElementById('actionMask').classList.remove('open'); }, 300);
+        }
+
+        function openAction(role, id) {
+            const item = roomData[role].find(i => i.id === id);
+            if (!item || !item.clickable) return;
+            document.getElementById('sel-name').textContent = item.name;
+            const container = document.getElementById('action-options');
+            container.innerHTML = '';
+            let html = '';
+
+            if (role === 'viewing' && item.status === 'คำขอ') {
+                html = `<button onclick="update('อนุมัตินัดดู')" class="w-full flex items-center gap-4 p-4 rounded-2xl bg-emerald-50 text-emerald-700 font-bold"><i class="fa-solid fa-calendar-check text-xl"></i> อนุมัติการนัดดู</button><button onclick="update('ปฏิเสธ')" class="w-full flex items-center gap-4 p-4 rounded-2xl bg-red-50 text-red-700 font-bold"><i class="fa-solid fa-calendar-xmark text-xl"></i> ไม่อนุมัติ</button>`;
+            } else if (role === 'booking') {
+                if (item.status === 'คำขอ') {
+                    html = `<button onclick="update('อนุมัติจอง')" class="w-full flex items-center gap-4 p-4 rounded-2xl bg-emerald-50 text-emerald-700 font-bold"><i class="fa-solid fa-check-circle text-xl"></i> อนุมัติการจอง</button><button onclick="update('ปฏิเสธจอง')" class="w-full flex items-center gap-4 p-4 rounded-2xl bg-red-50 text-red-700 font-bold"><i class="fa-solid fa-times-circle text-xl"></i> ไม่อนุมัติ</button>`;
+                } else if (item.status === 'อนุมัติ') {
+                    html = `<button onclick="alert('ไปหน้าทำสัญญาเช่า')" class="w-full flex items-center gap-4 p-4 rounded-2xl bg-blue-50 text-blue-700 font-bold"><i class="fa-solid fa-file-signature text-xl"></i> เปลี่ยนสถานะเป็น ทำสัญญา</button><button onclick="update('ยกเลิกจอง')" class="w-full flex items-center gap-4 p-4 rounded-2xl bg-gray-100 text-gray-700 font-bold"><i class="fa-solid fa-ban text-xl"></i> ยกเลิกการจองนี้</button>`;
+                }
+            } else if (role === 'contract') {
+                html = `<button onclick="alert('ดูข้อมูลสัญญา')" class="w-full flex items-center gap-4 p-4 rounded-2xl bg-blue-50 text-blue-700 font-bold"><i class="fa-solid fa-file-invoice text-xl"></i> ดูรายละเอียดสัญญา</button>`;
+            }
+
+            if (html) {
+                container.innerHTML = html;
+                document.getElementById('actionMask').classList.add('open');
+                document.getElementById('actionSheet').classList.add('open');
+            }
+        }
+
+        function update(msg) { alert('ดำเนินการ: ' + msg); closeAction(); }
+
+        function render() {
+            Object.keys(roomData).forEach(role => {
+                const list = document.getElementById(`content-${role}`);
+                const data = roomData[role];
+
+                list.innerHTML = data.map(item => {
+                    const clickAttr = item.clickable ? `onclick="openAction('${role}', ${item.id})"` : '';
+                    const opacity = item.clickable ? '' : 'opacity-50 grayscale-[0.2]';
+
+                    if (role === 'contract') {
+                        return `<div ${clickAttr} class="bg-white p-5 rounded-2xl shadow-sm border-l-4 ${styles[item.s1]} flex justify-between items-center transition active:scale-95 ${opacity}"><div><p class="text-lg font-bold text-gray-800 leading-tight">${item.name}</p><p class="text-xs text-gray-400 mt-1 font-medium">${item.price}</p></div><div class="flex flex-col gap-1.5 items-end"><span class="text-[10px] font-extrabold px-3 py-1.5 rounded-full ${styles[item.s1].split(' border')[0]}">${item.status1}</span>${item.status1 !== 'หมดสัญญา' ? `<span class="text-[10px] font-extrabold px-3 py-1.5 rounded-full ${styles[item.s2]}">${item.status2}</span>` : ''}</div></div>`;
+                    } else {
+                        return `<div ${clickAttr} class="bg-white p-5 rounded-2xl shadow-sm border-l-4 ${styles[item.type]} flex justify-between items-center transition active:scale-95 ${opacity}"><div><p class="text-lg font-bold text-gray-800 leading-tight">${item.name}</p><p class="text-[11px] text-gray-400 mt-1 font-medium">${item.date || item.info}</p>${role === 'booking' ? `<p class="text-[11px] text-blue-500 font-bold mt-0.5"><i class="fa-solid fa-calendar-day mr-1"></i>${item.viewDate}</p>` : ''}</div><span class="text-[10px] font-extrabold px-3 py-1.5 rounded-full ${styles[item.type].split(' border')[0]}">${item.status}</span></div>`;
+                    }
+                }).join('');
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => { render(); switchTab('contract'); });
+    </script>
+</body>
+</html>

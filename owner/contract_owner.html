@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ทำสัญญาเช่า (Contract Signing)</title>
+    
+    <!-- Google Fonts: Kanit -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS (CDN - Stable version) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { 
+            font-family: 'Kanit', sans-serif; 
+            background-color: #f3f4f6; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+        
+        /* Bottom Sheet Styles */
+        .bottom-sheet {
+            transform: translateY(100%);
+            transition: transform 0.3s ease-in-out;
+            max-height: 95vh;
+        }
+        .bottom-sheet.open {
+            transform: translateY(0);
+        }
+        .mask {
+            opacity: 0;
+            display: none;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .mask.open {
+            opacity: 1;
+            display: block;
+        }
+        /* Custom file input styling */
+        .custom-file-input {
+            width: 0.1px;
+            height: 0.1px;
+            opacity: 0;
+            overflow: hidden;
+            position: absolute;
+            z-index: -1;
+        }
+        /* Custom Color for Contract Button (Blue) */
+        .btn-contract {
+            background-color: #2563eb; 
+        }
+        .btn-contract:hover {
+            background-color: #1d4ed8;
+        }
+        .btn-contract:active {
+             background-color: #1e40af;
+        }
+        .shadow-contract {
+             box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3), 0 4px 6px -2px rgba(37, 99, 235, 0.15);
+        }
+        
+        /* Date Picker Styling - Native Picker UX */
+        .date-input-wrapper {
+            position: relative;
+            display: block;
+        }
+        /* Hidden input type date that will trigger the native picker */
+        .native-date-input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            left: 0;
+            top: 0;
+            opacity: 0; 
+            cursor: pointer;
+            z-index: 10; 
+        }
+        .date-text-display {
+             color: #1f2937;
+             font-weight: 500;
+        }
+        .date-text-placeholder {
+             color: #9ca3af; /* gray-400 */
+             font-weight: 500;
+        }
+
+    </style>
+</head>
+<body class="min-h-screen relative"> 
+
+    <!-- ========================================================= -->
+    <!-- MOCK VIEW: Room List to trigger the action -->
+    <!-- ========================================================= -->
+    <div id="view-mock-list" class="h-screen p-4 bg-f3f4f6">
+        <h1 class="text-2xl font-extrabold text-gray-800 pt-10">หน้าหลัก (จำลอง)</h1>
+        <p class="text-gray-500 mb-6">กดที่ห้องเพื่อเปิดเมนูการดำเนินการ</p>
+
+        <!-- Room 101: Mock Room Card (Reserved status - Scenario 1) -->
+        <div onclick="openRoomActions('101');" class="bg-white rounded-xl p-4 shadow-md shadow-gray-200/50 border-l-4 border-l-purple-500 transition-all duration-200 active:scale-[0.98] cursor-pointer overflow-hidden mb-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-xl font-extrabold text-purple-700 leading-none">101</p>
+                    <p class="text-xs text-gray-600 mt-1 font-medium">แอร์ - 5,000 บ./ด.</p>
+                </div>
+                <div class="flex flex-col items-end">
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap bg-purple-500/10 text-purple-700"><i class="fa-solid fa-bookmark mr-1"></i> จอง</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Room 201: Mock Room Card (Vacant status - Scenario 2) -->
+        <div onclick="openRoomActions('201');" class="bg-white rounded-xl p-4 shadow-md shadow-gray-200/50 border-l-4 border-l-green-500 transition-all duration-200 active:scale-[0.98] cursor-pointer overflow-hidden">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-xl font-extrabold text-green-700 leading-none">201</p>
+                    <p class="text-xs text-gray-600 mt-1 font-medium">พัดลม - 3,500 บ./ด.</p>
+                </div>
+                <div class="flex flex-col items-end">
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap bg-green-500/10 text-green-700"><i class="fa-solid fa-check mr-1"></i> ว่าง</span>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- ========================================================= -->
+    <!-- OVERLAYS: ROOM ACTION SHEET (เพื่อเข้าสู่หน้าทำสัญญา) -->
+    <!-- (Keep as is) -->
+    <!-- ========================================================= -->
+    <div id="roomActionMask" class="mask fixed inset-0 bg-black/60 z-50 backdrop-blur-[2px]" onclick="closeRoomActions()"></div>
+    <div id="roomActionSheet" class="bottom-sheet fixed bottom-0 left-0 w-full bg-white z-[60] rounded-t-[32px] shadow-2xl flex flex-col max-h-[85vh]">
+        <div class="flex justify-between items-center px-6 pt-6 pb-2 border-b border-gray-100">
+            <!-- HEADER: การดำเนินการสำหรับห้อง -->
+            <h2 class="text-lg font-bold text-gray-800">การดำเนินการสำหรับห้อง <span id="selectedRoomNumber" class="text-blue-600"></span></h2> 
+            <button onclick="closeRoomActions()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-4 space-y-2">
+            
+            <!-- 1. จอง -->
+            <button onclick="alert('ไปยังหน้าจอง'); closeRoomActions();" class="w-full flex items-center gap-3 p-4 rounded-xl text-left hover:bg-gray-50 active:bg-gray-100 transition">
+                <i class="fa-solid fa-bookmark text-purple-500 text-xl w-6"></i>
+                <span class="text-base font-medium text-gray-700">จองห้องพัก</span>
+            </button>
+            
+            <!-- 2. ทำสัญญา (เรียก openContractSheet) -->
+            <button onclick="handleRoomAction('ทำสัญญา');" class="w-full flex items-center gap-3 p-4 rounded-xl text-left hover:bg-gray-50 active:bg-gray-100 transition">
+                <i class="fa-solid fa-file-signature text-blue-500 text-xl w-6"></i>
+                <span class="text-base font-medium text-gray-700">ทำสัญญาเช่า</span>
+            </button>
+            
+            <!-- 3. รายการเช่า/รายละเอียด -->
+            <button onclick="alert('ไปยังรายละเอียด'); closeRoomActions();" class="w-full flex items-center gap-3 p-4 rounded-xl text-left hover:bg-gray-50 active:bg-gray-100 transition">
+                <i class="fa-solid fa-list-check text-green-500 text-xl w-6"></i>
+                <span class="text-base font-medium text-gray-700">ดูรายละเอียด/รายการเช่า</span>
+            </button>
+            
+            <!-- 4. รายการซ่อม -->
+            <button onclick="alert('ไปยังรายการซ่อม'); closeRoomActions();" class="w-full flex items-center gap-3 p-4 rounded-xl text-left hover:bg-gray-50 active:bg-gray-100 transition">
+                <i class="fa-solid fa-wrench text-yellow-500 text-xl w-6"></i>
+                <span class="text-base font-medium text-gray-700">จัดการรายการซ่อม</span>
+            </button>
+
+        </div>
+        <div class="p-4 border-t border-gray-100 pb-safe bg-white rounded-t-xl">
+             <button onclick="closeRoomActions()" class="w-full py-3.5 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50">ยกเลิก</button>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- NEW OVERLAYS: CONTRACT SHEET (หน้าทำสัญญาเช่า) -->
+    <!-- ========================================================= -->
+    <div id="contractMask" class="mask fixed inset-0 bg-black/60 z-50 backdrop-blur-[2px]" onclick="closeContractSheet()"></div>
+    <div id="contractSheet" class="bottom-sheet fixed bottom-0 left-0 w-full bg-white z-[60] rounded-t-[32px] shadow-2xl flex flex-col max-h-[95vh]">
+        
+        <!-- HEADER: ทำสัญญาเช่า -->
+        <div class="px-6 pt-6 pb-2 sticky top-0 bg-white z-10 rounded-t-[32px]">
+            <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-file-signature text-blue-600"></i> ทำสัญญาเช่า
+                    <span id="contractRoomNumber" class="text-blue-600 text-xl">101</span>
+                </h2> 
+                <button onclick="closeContractSheet()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+        </div>
+        
+        <!-- CONTENT: ส่วนที่ Scroll ได้ -->
+        <div class="flex-1 overflow-y-auto px-6 space-y-6 pt-4"> 
+            
+            <!-- Room Info & Financial Summary (ปรับปรุง UX ให้คล้ายหน้าจอง) -->
+            <div class="p-4 bg-purple-50 rounded-xl space-y-2 border border-purple-200">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600 font-medium">ห้อง:</span>
+                    <span id="contractRoomDetail" class="font-bold text-gray-700">101 (แอร์)</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600 font-medium">อัตราค่าเช่า/เดือน:</span>
+                    <span id="monthly_rent_display" class="font-bold text-indigo-700">5,000.00 บ.</span>
+                    <input type="hidden" id="monthly_rent_hidden" value="5000">
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600 font-medium">ค่าประกัน/มัดจำทั้งหมด:</span>
+                    <span id="total_deposit_fee" class="font-bold text-indigo-700">7,000.00 บ.</span>
+                </div>
+
+                <!-- Booking Alert (แสดงถ้ามีค่าจอง) -->
+                <div id="booking-alert" class="text-xs text-purple-700 bg-purple-100 p-2 rounded hidden">
+                     <i class="fa-solid fa-bookmark mr-1"></i> จองแล้วโดย: <span id="bookedTenantName"></span> (ชำระแล้ว: <span id="paid_booking_fee"></span>)
+                </div>
+                <input type="hidden" id="paid_booking_fee_hidden" value="0">
+                <input type="hidden" id="total_deposit_fee_hidden" value="0">
+            </div>
+
+            <!-- ส่วนที่ 1: ข้อมูลผู้เช่า (1-3, 10) -->
+            <h3 class="text-base font-bold text-gray-700 border-b pb-1 border-gray-200 flex items-center gap-2"><i class="fa-solid fa-user-tag text-blue-500"></i> ข้อมูลผู้เช่า</h3>
+            <div class="grid grid-cols-2 gap-3">
+                <!-- 1. ชื่อผู้เช่า -->
+                <div>
+                    <label for="tenant_fname" class="text-xs font-semibold text-gray-600 mb-1 block">1. ชื่อผู้เช่า <span class="text-red-500">*</span></label>
+                    <input type="text" id="tenant_fname" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="เช่น สมชาย" required>
+                </div>
+                <!-- 2. นามสกุลผู้เช่า -->
+                <div>
+                    <label for="tenant_lname" class="text-xs font-semibold text-gray-600 mb-1 block">2. นามสกุลผู้เช่า <span class="text-red-500">*</span></label>
+                    <input type="text" id="tenant_lname" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="เช่น ใจดี" required>
+                </div>
+            </div>
+            
+            <!-- 3. เลขบัตรประชาชนผู้เช่า -->
+            <div>
+                <label for="tenant_idcard" class="text-xs font-semibold text-gray-600 mb-1 block">3. เลขบัตรประชาชน <span class="text-red-500">*</span></label>
+                <input type="text" id="tenant_idcard" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="xxxxxxxxxxxxx" maxlength="13" required>
+            </div>
+
+            <!-- 10. ไฟล์บัตรประชาชน (พร้อม Preview) -->
+            <div>
+                <label for="tenant_idcard_upload" class="text-xs font-semibold text-gray-600 mb-1 block">4. อัปโหลดไฟล์บัตรประชาชน (รูปภาพ/PDF) <span class="text-red-500">*</span></label>
+                <input type="file" id="tenant_idcard_upload" class="custom-file-input" accept="image/*, application/pdf" required onchange="updateFileNameContract(this, 'idcard')">
+                <label for="tenant_idcard_upload" id="idcard-file-label" class="w-full p-3 border border-gray-300 rounded-lg flex items-center justify-between cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition">
+                    <span class="text-gray-500 truncate" id="idcard-file-name-display">คลิกเพื่อเลือกไฟล์บัตรประชาชน</span>
+                    <i class="fa-solid fa-id-card text-blue-500 ml-2"></i>
+                </label>
+                <!-- Preview Area for ID Card -->
+                <div id="idcard-preview-container" class="mt-3 p-3 bg-gray-100 border border-gray-200 rounded-lg hidden">
+                    <p class="text-xs font-semibold text-gray-600 mb-2">ตัวอย่างบัตรประชาชน:</p>
+                    <img id="idcard-preview-image" class="w-full h-auto max-h-40 object-contain rounded-md hidden" alt="ID Card Preview">
+                    <p id="idcard-preview-pdf" class="text-sm text-red-600 hidden"><i class="fa-solid fa-file-pdf mr-1"></i> ไม่สามารถแสดงตัวอย่าง PDF ได้</p>
+                </div>
+            </div>
+            
+            <!-- ส่วนที่ 2: รายละเอียดสัญญา (4, 5) -->
+            <h3 class="text-base font-bold text-gray-700 border-b pb-1 border-gray-200 flex items-center gap-2"><i class="fa-solid fa-file-contract text-orange-500"></i> เงื่อนไขสัญญา</h3>
+
+            <div class="grid grid-cols-2 gap-3">
+                <!-- 4. วันที่เริ่มสัญญา -->
+                <div>
+                    <label for="start_date_input" class="text-xs font-semibold text-gray-600 mb-1 block">5. วันที่เริ่มสัญญา <span class="text-red-500">*</span></label>
+                    <div class="date-input-wrapper">
+                        <input type="text" id="start_date_display" class="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white cursor-pointer date-text-placeholder" placeholder="วว/ดด/ปปปป (พ.ศ.)" readonly>
+                        <input type="date" id="start_date_hidden" class="native-date-input" required onchange="updateThaiDateContract(this.value, 'start_date_display'); updateEndDate()">
+                        <div class="absolute inset-y-0 right-0 px-3 flex items-center text-blue-500 h-full pointer-events-none">
+                            <i class="fa-solid fa-calendar-check"></i>
+                        </div>
+                    </div>
+                </div>
+                <!-- 5. วันที่สิ้นสุดสัญญา -->
+                 <div>
+                    <label for="end_date_display" class="text-xs font-semibold text-gray-600 mb-1 block">6. วันที่สิ้นสุดสัญญา</label>
+                    <input type="text" id="end_date_display" class="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-medium" placeholder="จะถูกคำนวณอัตโนมัติ" readonly>
+                </div>
+            </div>
+            
+            <!-- Duration -->
+            <div>
+                <label for="contract_duration" class="text-xs font-semibold text-gray-600 mb-1 block">7. ระยะเวลาสัญญา (เดือน) <span class="text-red-500">*</span></label>
+                <input type="number" id="contract_duration" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="เช่น 12" value="12" min="1" required oninput="updateEndDate()">
+            </div>
+            
+            <!-- ส่วนที่ 3: สรุปค่าใช้จ่ายและการชำระ (8, 9, 10) -->
+            <h3 class="text-base font-bold text-gray-700 border-b pb-1 border-gray-200 flex items-center gap-2"><i class="fa-solid fa-money-check-dollar text-green-500"></i> สรุปค่าใช้จ่ายที่ต้องชำระวันนี้</h3>
+
+            <!-- 8. ค่าประกันที่เหลือ (คำนวณ) -->
+            <div class="p-4 bg-red-50 rounded-lg shadow-md space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-sm font-semibold text-red-800">8. ค่าประกันที่เหลือที่ต้องชำระ:</span>
+                    <span id="remaining_deposit_fee" class="font-bold text-red-800 text-lg">7,000.00 บ.</span>
+                </div>
+                
+                <!-- 9. วันที่ชำระค่าประกันที่เหลือ -->
+                 <div>
+                    <label for="deposit_payment_date" class="text-xs font-semibold text-gray-600 mb-1 block">9. วันที่ชำระค่าประกันที่เหลือ <span class="text-red-500">*</span></label>
+                    <div class="date-input-wrapper">
+                        <input type="text" id="deposit_payment_date_display" class="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white cursor-pointer date-text-display" placeholder="วว/ดด/ปปปป (พ.ศ.)" readonly>
+                        <input type="date" id="deposit_payment_date_hidden" class="native-date-input" required onchange="updateThaiDateContract(this.value, 'deposit_payment_date_display')">
+                        <div class="absolute inset-y-0 right-0 px-3 flex items-center text-blue-500 h-full pointer-events-none">
+                            <i class="fa-solid fa-calendar-alt"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 10. ไฟล์สลิปชำระค่าประกันที่เหลือ (พร้อม Preview) -->
+                <div>
+                    <label for="deposit_slip_upload" class="text-xs font-semibold text-gray-600 mb-1 block">10. สลิปชำระค่าประกันที่เหลือ <span class="text-red-500">*</span></label>
+                    <input type="file" id="deposit_slip_upload" class="custom-file-input" accept="image/*, application/pdf" required onchange="updateFileNameContract(this, 'deposit_slip')">
+                    <label for="deposit_slip_upload" id="deposit-slip-file-label" class="w-full p-3 border border-gray-300 rounded-lg flex items-center justify-between cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition">
+                        <span class="text-gray-500 truncate" id="deposit-slip-file-name-display">คลิกเพื่อเลือกไฟล์สลิป</span>
+                        <i class="fa-solid fa-receipt text-red-500 ml-2"></i>
+                    </label>
+                    <!-- Preview Area for Deposit Slip -->
+                    <div id="slip-preview-container" class="mt-3 p-3 bg-gray-100 border border-gray-200 rounded-lg hidden">
+                        <p class="text-xs font-semibold text-gray-600 mb-2">ตัวอย่างสลิป:</p>
+                        <img id="slip-preview-image-slip" class="w-full h-auto max-h-40 object-contain rounded-md hidden" alt="Slip Preview">
+                        <p id="slip-preview-pdf-slip" class="text-sm text-red-600 hidden"><i class="fa-solid fa-file-pdf mr-1"></i> ไม่สามารถแสดงตัวอย่าง PDF ได้</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 11. รายละเอียดสัญญาเช่าหลัก (Text Display) -->
+            <h3 class="text-base font-bold text-gray-700 border-b pb-1 border-gray-200 flex items-center gap-2"><i class="fa-solid fa-book-open text-blue-500"></i> 11. รายละเอียดสัญญาเช่า (สำหรับอ่านในระบบ)</h3>
+            <div class="p-4 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 space-y-3 max-h-60 overflow-y-auto">
+                <p class="font-bold text-base text-center text-blue-800">สัญญาเช่าห้องพัก (Mock-up)</p>
+                
+                <p><strong>1. ข้อมูลห้องเช่า:</strong> ห้อง <span class="font-semibold text-blue-600" id="contract-text-room">101</span>, ค่าเช่า <span class="font-semibold text-blue-600" id="contract-text-rent">5,000.00 บ./ด.</span>, ค่าประกัน <span class="font-semibold text-blue-600" id="contract-text-deposit">7,000.00 บ.</span></p>
+                <p><strong>2. ระยะเวลา:</strong> เริ่มวันที่ <span class="font-semibold text-blue-600" id="contract-text-start"></span> สิ้นสุดวันที่ <span class="font-semibold text-blue-600" id="contract-text-end"></span> (รวม <span id="contract-text-duration">12</span> เดือน)</p>
+                <p><strong>3. การชำระ:</strong> ผู้เช่าตกลงชำระค่าเช่าทุกวันที่ 1 ของเดือนถัดไป หากเกินกำหนดต้องชำระค่าปรับตามที่กำหนด</p>
+                <p><strong>4. การดูแล:</strong> ผู้เช่าต้องดูแลทรัพย์สินภายในห้องเช่า หากเกิดความเสียหายที่ไม่ได้เกิดจากการใช้งานปกติ ผู้เช่าต้องรับผิดชอบค่าซ่อมแซม</p>
+                <p><strong>5. สิทธิในการยกเลิก:</strong> ผู้ให้เช่าสงวนสิทธิ์ในการยกเลิกสัญญา หากผู้เช่าผิดข้อตกลงใดๆ ในสัญญาอย่างร้ายแรง</p>
+            </div>
+
+            <!-- 12. การยืนยัน (Acceptance) -->
+            <h3 class="text-base font-bold text-gray-700 border-b pb-1 border-gray-200 flex items-center gap-2"><i class="fa-solid fa-check-circle text-purple-500"></i> 12. ยืนยันข้อตกลง</h3>
+            <div class="flex items-start">
+                <input type="checkbox" id="contract_agree" class="w-5 h-5 mt-1 rounded text-blue-600 border-gray-300 focus:ring-blue-500" required>
+                <label for="contract_agree" class="ml-3 text-sm text-gray-700">
+                    ข้าพเจ้าขอยืนยันว่าได้อ่าน **รายละเอียดสัญญาเช่า (ข้อ 11)** ในระบบอย่างละเอียด และยอมรับข้อกำหนดทั้งหมด
+                    <span class="text-red-500">*</span>
+                </label>
+            </div>
+            
+        </div>
+        <div class="p-4 border-t border-gray-100 pb-safe bg-white rounded-t-xl">
+            <div class="flex gap-3">
+                <button onclick="closeContractSheet()" class="flex-1 py-3.5 rounded-xl border border-gray-300 text-gray-600 font-bold text-sm hover:bg-gray-100">ยกเลิก</button>
+                <button onclick="submitContract()" class="flex-[2] py-3.5 rounded-xl text-white font-bold text-sm active:scale-[0.98] transition btn-contract shadow-contract"><i class="fa-solid fa-signature mr-2"></i> ยืนยันการทำสัญญา</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Mock data structure for rooms and pre-booked data
+        const roomData = {
+            '101': { // Scenario 1: Booked in advance (Tenant name/ID unknown until contract)
+                status: 'booked', type: 'แอร์', rent: 5000, deposit: 7000, 
+                bookedTenant: 'กานดา ชื่นใจ', bookedFee: 1500, bookedDate: '2025-12-10',
+                initialMoveIn: '2026-01-01'
+            },
+            '201': { // Scenario 2: Vacant/Sign immediately (No prior booking fee)
+                status: 'vacant', type: 'พัดลม', rent: 3500, deposit: 5000, 
+                bookedTenant: '', bookedFee: 0, bookedDate: '',
+                initialMoveIn: new Date().toISOString().substring(0, 10) // Today's date
+            },
+        };
+        
+        // =========================================================
+        // Utility Functions (General)
+        // =========================================================
+
+        function toThaiDate(dateString) {
+            if (!dateString) return '';
+            const [year, month, day] = dateString.split('-').map(Number);
+            const thaiYear = year + 543; 
+            return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${thaiYear}`;
+        }
+        
+        function formatCurrency(amount) {
+            return parseFloat(amount).toLocaleString('th-TH', { minimumFractionDigits: 2 }) + ' บ.';
+        }
+        
+        // =========================================================
+        // Date Picker UX for Contract Sheet
+        // =========================================================
+        /**
+         * Updates the text display with Thai date format.
+         * @param {string} dateValue - YYYY-MM-DD format date.
+         * @param {string} displayId - ID of the text input display.
+         */
+        function updateThaiDateContract(dateValue, displayId = 'start_date_display') {
+            const displayInput = document.getElementById(displayId);
+            if (!displayInput) return; // Null Check
+            
+            if (dateValue) {
+                displayInput.value = toThaiDate(dateValue);
+                displayInput.classList.remove('date-text-placeholder');
+                displayInput.classList.add('date-text-display');
+            } else {
+                displayInput.value = '';
+                displayInput.classList.remove('date-text-display');
+                displayInput.classList.add('date-text-placeholder');
+            }
+        }
+        
+        /**
+         * คำนวณวันสิ้นสุดสัญญาอัตโนมัติ และอัพเดท Contract Text
+         */
+        function updateEndDate() {
+            const startDateInput = document.getElementById('start_date_hidden');
+            const durationInput = document.getElementById('contract_duration');
+            const endDateDisplay = document.getElementById('end_date_display');
+            
+            if (!startDateInput || !durationInput || !endDateDisplay) return; // Null Check
+            
+            const startDateValue = startDateInput.value;
+            const duration = parseInt(durationInput.value) || 0;
+            
+            if (!startDateValue || duration <= 0) {
+                endDateDisplay.placeholder = "จะถูกคำนวณอัตโนมัติ";
+                endDateDisplay.value = "";
+                document.getElementById('contract-text-start').textContent = '—';
+                document.getElementById('contract-text-end').textContent = '—';
+                document.getElementById('contract-text-duration').textContent = '0';
+                return;
+            }
+            
+            // Calculate end date: 1 day before the start date of the (duration + 1)th month cycle
+            const startDate = new Date(startDateValue + 'T00:00:00'); 
+            
+            let finalEndDate = new Date(startDate.getFullYear(), startDate.getMonth() + duration, startDate.getDate());
+            finalEndDate.setDate(finalEndDate.getDate() - 1); 
+
+            // Format to YYYY-MM-DD
+            const endMonth = String(finalEndDate.getMonth() + 1).padStart(2, '0');
+            const endDay = String(finalEndDate.getDate()).padStart(2, '0');
+            const endDateString = `${finalEndDate.getFullYear()}-${endMonth}-${endDay}`;
+            
+            endDateDisplay.value = toThaiDate(endDateString);
+            
+            // Update Contract Text Mock-up
+            document.getElementById('contract-text-start').textContent = toThaiDate(startDateValue);
+            document.getElementById('contract-text-end').textContent = toThaiDate(endDateString);
+            document.getElementById('contract-text-duration').textContent = duration;
+        }
+
+        /**
+         * คำนวณค่าประกันที่เหลือที่ต้องชำระ
+         * @param {number} totalDeposit - ค่าประกันทั้งหมด
+         * @param {number} paidBookingFee - ค่าจองที่จ่ายมาแล้ว
+         */
+        function calculateRemainingDeposit(totalDeposit, paidBookingFee) {
+            const remaining = totalDeposit - paidBookingFee;
+            const remainingDisplay = document.getElementById('remaining_deposit_fee');
+            if (remainingDisplay) { // Null Check
+                 remainingDisplay.textContent = formatCurrency(Math.max(0, remaining));
+            }
+        }
+
+        // =========================================================
+        // Contract File Upload and Preview
+        // =========================================================
+        /**
+         * Updates file name display and handles image preview.
+         * @param {HTMLInputElement} input - The file input element.
+         * @param {string} type - 'idcard', 'deposit_slip', or 'contract_doc'.
+         */
+        function updateFileNameContract(input, type) {
+            let fileNameDisplay, fileLabel, previewContainer, previewImage, defaultText;
+            let targetImageId, targetPdfId;
+
+            if (type === 'idcard') {
+                fileNameDisplay = document.getElementById('idcard-file-name-display');
+                previewContainer = document.getElementById('idcard-preview-container');
+                targetImageId = 'idcard-preview-image';
+                targetPdfId = 'idcard-preview-pdf';
+                defaultText = 'คลิกเพื่อเลือกไฟล์บัตรประชาชน';
+            } else if (type === 'deposit_slip') {
+                fileNameDisplay = document.getElementById('deposit-slip-file-name-display');
+                previewContainer = document.getElementById('slip-preview-container');
+                targetImageId = 'slip-preview-image-slip';
+                targetPdfId = 'slip-preview-pdf-slip';
+                defaultText = 'คลิกเพื่อเลือกไฟล์สลิป';
+            } else if (type === 'contract_doc') {
+                fileNameDisplay = document.getElementById('contract-file-name-display');
+                defaultText = 'คลิกเพื่อเลือกไฟล์สัญญาที่เซ็นแล้ว';
+            }
+            
+            if (!fileNameDisplay) return; // Null Check
+
+            // Reset (only apply to elements that exist for this type)
+            const targetImage = document.getElementById(targetImageId);
+            const targetPdf = document.getElementById(targetPdfId);
+            if (previewContainer) previewContainer.classList.add('hidden');
+            if (targetImage) targetImage.classList.add('hidden');
+            if (targetPdf) targetPdf.classList.add('hidden');
+            if (targetImage) targetImage.src = '';
+
+            
+            if (input.files.length > 0) {
+                const file = input.files[0];
+                fileNameDisplay.textContent = file.name;
+                fileNameDisplay.classList.remove('text-gray-500');
+                fileNameDisplay.classList.add('text-gray-800', 'font-medium');
+                
+                // Show Preview Section
+                if (previewContainer) previewContainer.classList.remove('hidden');
+
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        if (targetImage) targetImage.classList.remove('hidden');
+                        if (targetImage) targetImage.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                } else if (file.type === 'application/pdf') {
+                    if (targetPdf) targetPdf.classList.remove('hidden');
+                }
+            } else {
+                // No file selected
+                fileNameDisplay.textContent = defaultText;
+                fileNameDisplay.classList.add('text-gray-500');
+                fileNameDisplay.classList.remove('text-gray-800', 'font-medium');
+            }
+        }
+
+        // =========================================================
+        // Contract Sheet Functions
+        // =========================================================
+        function openContractSheet(roomNumber) {
+            const data = roomData[roomNumber];
+            
+            if (!data) {
+                alert('ไม่พบข้อมูลห้องพักสำหรับการทำสัญญา');
+                return;
+            }
+
+            // Clear form and set initial values (important to call first for safety)
+            clearContractForm(); 
+
+            // Get required DOM Elements once (Null check inside update functions)
+            const paidBookingFeeHidden = document.getElementById('paid_booking_fee_hidden');
+            const durationInput = document.getElementById('contract_duration');
+            const startDateHidden = document.getElementById('start_date_hidden');
+            const depositPaymentDateHidden = document.getElementById('deposit_payment_date_hidden');
+            const monthlyRentHidden = document.getElementById('monthly_rent_hidden');
+
+            // 1. Populate Room/Booking Summary
+            if (document.getElementById('contractRoomNumber')) document.getElementById('contractRoomNumber').textContent = roomNumber;
+            if (document.getElementById('contractRoomDetail')) document.getElementById('contractRoomDetail').textContent = `${roomNumber} (${data.type})`;
+            if (document.getElementById('monthly_rent_display')) document.getElementById('monthly_rent_display').textContent = formatCurrency(data.rent);
+            if (monthlyRentHidden) monthlyRentHidden.value = data.rent;
+            
+            if (document.getElementById('total_deposit_fee')) document.getElementById('total_deposit_fee').textContent = formatCurrency(data.deposit);
+            if (document.getElementById('total_deposit_fee_hidden')) document.getElementById('total_deposit_fee_hidden').value = data.deposit;
+            
+            // 2. Handle Booking Data (if any)
+            if (data.status === 'booked' && data.bookedFee > 0) {
+                if (document.getElementById('booking-alert')) document.getElementById('booking-alert').classList.remove('hidden');
+                if (document.getElementById('bookedTenantName')) document.getElementById('bookedTenantName').textContent = data.bookedTenant;
+                if (document.getElementById('paid_booking_fee')) document.getElementById('paid_booking_fee').textContent = formatCurrency(data.bookedFee);
+                if (paidBookingFeeHidden) paidBookingFeeHidden.value = data.bookedFee;
+                
+                // Prefill Tenant Info from Booking (Assuming Tenant is the Booker)
+                const [fname, lname] = (data.bookedTenant || ' ').split(' ');
+                if (document.getElementById('tenant_fname')) document.getElementById('tenant_fname').value = fname || '';
+                if (document.getElementById('tenant_lname')) document.getElementById('tenant_lname').value = lname || '';
+            } else {
+                if (document.getElementById('booking-alert')) document.getElementById('booking-alert').classList.add('hidden');
+                if (document.getElementById('paid_booking_fee')) document.getElementById('paid_booking_fee').textContent = formatCurrency(0);
+                if (paidBookingFeeHidden) paidBookingFeeHidden.value = 0;
+            }
+            
+            // 3. Populate Default Dates and Financials
+            const today = new Date().toISOString().substring(0, 10);
+            const startDateValue = (data.status === 'booked' && data.initialMoveIn) ? data.initialMoveIn : today;
+            
+            if (startDateHidden) {
+                startDateHidden.value = startDateValue;
+                updateThaiDateContract(startDateValue, 'start_date_display');
+            }
+            
+            if (depositPaymentDateHidden) {
+                depositPaymentDateHidden.value = today; // Payment date defaults to today
+                updateThaiDateContract(today, 'deposit_payment_date_display');
+            }
+
+            if (durationInput) durationInput.value = 12;
+
+            // 4. Calculations
+            const paidFee = parseFloat(paidBookingFeeHidden?.value || 0);
+            calculateRemainingDeposit(data.deposit, paidFee);
+            updateEndDate();
+
+            // 5. Update Contract Text Mock-up (Must be after Room/Financial data is set)
+            if (document.getElementById('contract-text-room')) document.getElementById('contract-text-room').textContent = roomNumber;
+            if (document.getElementById('contract-text-rent')) document.getElementById('contract-text-rent').textContent = formatCurrency(data.rent);
+            if (document.getElementById('contract-text-deposit')) document.getElementById('contract-text-deposit').textContent = formatCurrency(data.deposit);
+
+            // Add listeners for dynamic calculation
+            if (startDateHidden) startDateHidden.onchange = function() { updateThaiDateContract(this.value, 'start_date_display'); updateEndDate(); };
+            if (durationInput) durationInput.oninput = updateEndDate;
+
+            openSheet('contractSheet', 'contractMask');
+        }
+
+        function clearContractForm() {
+            // Remove listeners
+            if(document.getElementById('start_date_hidden')) document.getElementById('start_date_hidden').onchange = null;
+            if(document.getElementById('contract_duration')) document.getElementById('contract_duration').oninput = null;
+            
+            // Clear all inputs (Adding checks for all fields)
+            const fields = ['tenant_fname', 'tenant_lname', 'tenant_idcard', 'tenant_idcard_upload', 'contract_duration', 'contract_agree', 'deposit_slip_upload', 'contract_doc_upload'];
+            fields.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    if (element.type === 'checkbox') {
+                        element.checked = false;
+                    } else if (element.type === 'file') {
+                        element.value = '';
+                    } else {
+                        element.value = '';
+                    }
+                }
+            });
+            
+            // Clear date inputs/displays
+            const dateInputs = ['start_date_hidden', 'start_date_display', 'end_date_display', 'deposit_payment_date_hidden', 'deposit_payment_date_display'];
+            dateInputs.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.value = '';
+                    if (id.includes('_display')) {
+                         element.classList.remove('date-text-display');
+                         element.classList.add('date-text-placeholder');
+                    }
+                }
+            });
+            
+            // Clear file displays and previews (Safe Access)
+            if(document.getElementById('tenant_idcard_upload')) updateFileNameContract(document.getElementById('tenant_idcard_upload'), 'idcard');
+            if(document.getElementById('deposit_slip_upload')) updateFileNameContract(document.getElementById('deposit_slip_upload'), 'deposit_slip');
+            
+            // Clear image previews
+            if(document.getElementById('idcard-preview-container')) document.getElementById('idcard-preview-container').classList.add('hidden');
+            if(document.getElementById('slip-preview-container')) document.getElementById('slip-preview-container').classList.add('hidden');
+        }
+
+        function closeContractSheet() {
+            clearContractForm();
+            closeSheet('contractSheet', 'contractMask');
+        }
+
+        function submitContract() {
+            const roomNumber = document.getElementById('contractRoomNumber').textContent;
+            const data = roomData[roomNumber];
+            
+            const fname = document.getElementById('tenant_fname').value.trim();
+            const lname = document.getElementById('tenant_lname').value.trim();
+            const idcard = document.getElementById('tenant_idcard').value.trim();
+            const startDate = document.getElementById('start_date_hidden').value;
+            const duration = document.getElementById('contract_duration').value;
+            const rent = document.getElementById('monthly_rent_hidden').value;
+            const depositPaymentDate = document.getElementById('deposit_payment_date_hidden').value;
+            const idcardFile = document.getElementById('tenant_idcard_upload').files;
+            const depositSlipFile = document.getElementById('deposit_slip_upload').files;
+            const agreed = document.getElementById('contract_agree').checked;
+
+            const remainingDepositAmount = data.deposit - data.bookedFee;
+            const endDateDisplay = document.getElementById('end_date_display').value;
+
+            // Simple Form Validation
+            if (!fname || !lname || idcard.length !== 13 || !startDate || !duration || !rent || !depositPaymentDate || idcardFile.length === 0 || !agreed) {
+                alert('กรุณากรอกข้อมูลผู้เช่าและสัญญาทั้งหมดให้ครบถ้วน รวมถึงไฟล์บัตรประชาชน และติ๊กยินยอมข้อตกลง');
+                return;
+            }
+            if (remainingDepositAmount > 0 && depositSlipFile.length === 0) {
+                 alert('ต้องอัปโหลดสลิปชำระค่าประกันที่เหลือ');
+                 return;
+            }
+
+
+            // Simulated submission
+            alert(`
+                --- ยืนยันการทำสัญญาสำเร็จ (จำลอง) ---
+                ห้อง: ${roomNumber} (ประเภท: ${data.type})
+                ผู้เช่า: ${fname} ${lname} (ID: ${idcard})
+                วันที่เริ่ม/สิ้นสุด: ${toThaiDate(startDate)} ถึง ${endDateDisplay}
+                ค่าเช่า/ด: ${formatCurrency(rent)}
+                ค่าจองจ่ายแล้ว: ${formatCurrency(data.bookedFee)}
+                ค่าประกันที่เหลือ: ${formatCurrency(Math.max(0, remainingDepositAmount))} (ชำระ ${toThaiDate(depositPaymentDate)})
+                
+                (ระบบจะเปลี่ยนสถานะห้องเป็น "มีคนเช่า" และบันทึกสัญญา)
+            `);
+
+            closeContractSheet();
+        }
+
+        // =========================================================
+        // Master Sheet Functions (Reused)
+        // =========================================================
+        function openSheet(sheetId, maskId) {
+            const sheet = document.getElementById(sheetId);
+            const mask = document.getElementById(maskId);
+            mask.classList.add('open');
+            sheet.classList.add('open');
+            document.body.style.overflow = 'hidden'; 
+        }
+
+        function closeSheet(sheetId, maskId) {
+            const sheet = document.getElementById(sheetId);
+            const mask = document.getElementById(maskId);
+            sheet.classList.remove('open');
+            setTimeout(() => {
+                mask.classList.remove('open');
+                document.body.style.overflow = 'auto'; 
+            }, 300);
+        }
+
+        function openRoomActions(roomNumber) {
+            document.getElementById('selectedRoomNumber').textContent = roomNumber;
+            openSheet('roomActionSheet', 'roomActionMask');
+        }
+
+        function closeRoomActions() {
+            closeSheet('roomActionSheet', 'roomActionMask');
+        }
+
+        function handleRoomAction(action) {
+            const roomNumber = document.getElementById('selectedRoomNumber').textContent;
+            closeRoomActions(); 
+
+            if (action === 'ทำสัญญา') {
+                 openContractSheet(roomNumber); 
+            } else {
+                 alert(`[ห้อง ${roomNumber}] เลือกดำเนินการ: ${action}\n\n(จำลองการเปลี่ยนหน้า)`);
+            }
+        }
+
+        // Ensure initial state is closed (good practice)
+        document.addEventListener('DOMContentLoaded', () => {
+             const sheets = [
+                 { id: 'roomActionMask', sheet: 'roomActionSheet' },
+                 { id: 'contractMask', sheet: 'contractSheet' }
+             ];
+
+             sheets.forEach(item => {
+                 const mask = document.getElementById(item.id);
+                 const sheet = document.getElementById(item.sheet);
+                 if (mask) mask.classList.remove('open');
+                 if (sheet) sheet.classList.remove('open');
+             });
+        });
+    </script>
+
+</body>
+</html>

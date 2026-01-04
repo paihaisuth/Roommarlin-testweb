@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>นัดดูห้องพัก (Room Viewing)</title>
+    
+    <!-- Google Fonts: Kanit -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { 
+            font-family: 'Kanit', sans-serif; 
+            background-color: #f8fafc; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+        
+        .bottom-sheet {
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 90vh;
+        }
+        .bottom-sheet.open {
+            transform: translateY(0);
+        }
+        .mask {
+            opacity: 0;
+            display: none;
+            transition: opacity 0.3s ease;
+        }
+        .mask.open {
+            opacity: 1;
+            display: block;
+        }
+        
+        /* New Theme Color: Emerald */
+        .btn-theme {
+            background-color: #059669; 
+        }
+        .btn-theme:hover {
+            background-color: #047857;
+        }
+        .btn-theme:active {
+             background-color: #065f46;
+        }
+        .shadow-theme {
+             box-shadow: 0 10px 15px -3px rgba(5, 150, 105, 0.3);
+        }
+        
+        .select-custom {
+            -webkit-appearance: none; 
+            appearance: none;
+            background-image: none;
+            text-align: center;
+            height: 52px; 
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body class="min-h-screen"> 
+
+    <!-- หน้าหลักจำลอง -->
+    <div class="p-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">ผังห้องพัก</h1>
+        <p class="text-sm text-gray-500 mb-6">คลิกที่ห้องเพื่อบันทึกการนัดหมาย</p>
+
+        <!-- Room Card -->
+        <div onclick="openRoomActions('102');" class="bg-white rounded-2xl p-5 shadow-sm border border-emerald-100 border-l-4 border-l-emerald-500 active:scale-[0.98] transition-transform cursor-pointer">
+            <div class="flex justify-between items-center">
+                <div>
+                    <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">ว่าง</span>
+                    <h3 class="text-2xl font-black text-gray-800 mt-1">102</h3>
+                    <p class="text-sm text-gray-500">แอร์ • 4,500 บาท</p>
+                </div>
+                <div class="bg-emerald-500 w-10 h-10 rounded-full flex items-center justify-center text-white">
+                    <i class="fa-solid fa-plus"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Action Sheet เมนูตัวเลือก -->
+    <div id="actionMask" class="mask fixed inset-0 bg-black/60 z-50 backdrop-blur-sm" onclick="closeRoomActions()"></div>
+    <div id="actionSheet" class="bottom-sheet fixed bottom-0 left-0 w-full bg-white z-[60] rounded-t-[32px] flex flex-col">
+        <div class="px-6 pt-6 pb-4 border-b border-gray-50 text-center">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4"></div>
+            <h2 class="text-lg font-bold text-gray-800">จัดการห้อง <span id="targetRoom" class="text-emerald-600"></span></h2>
+        </div>
+        <div class="p-6 space-y-3">
+            <button onclick="handleAction('นัดดู')" class="w-full flex items-center justify-between p-4 rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-100 active:bg-emerald-100 transition">
+                <span class="font-bold">นัดดูห้องพัก</span>
+                <i class="fa-solid fa-calendar-plus text-xl"></i>
+            </button>
+            <button onclick="handleAction('จอง')" class="w-full flex items-center justify-between p-4 rounded-2xl bg-gray-50 text-gray-700 border border-gray-100 active:bg-gray-100 transition">
+                <span class="font-bold text-gray-600">จองห้อง/ทำสัญญา</span>
+                <i class="fa-solid fa-file-signature text-gray-400"></i>
+            </button>
+        </div>
+        <div class="p-4 pb-safe">
+            <button onclick="closeRoomActions()" class="w-full py-4 text-gray-400 font-medium">ยกเลิก</button>
+        </div>
+    </div>
+
+    <!-- Viewing Sheet ฟอร์มนัดหมาย -->
+    <div id="viewingMask" class="mask fixed inset-0 bg-black/60 z-50 backdrop-blur-sm" onclick="closeViewingSheet()"></div>
+    <div id="viewingSheet" class="bottom-sheet fixed bottom-0 left-0 w-full bg-white z-[60] rounded-t-[32px] flex flex-col">
+        
+        <div class="px-8 pt-8 pb-4">
+            <h2 class="text-2xl font-black text-gray-800">นัดดูห้อง <span id="viewingRoom" class="text-emerald-600"></span></h2>
+            <p class="text-sm text-gray-500">กรอกข้อมูลเพื่อลงตารางนัดหมาย</p>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto px-8 py-4 space-y-6"> 
+            
+            <!-- ข้อมูลลูกค้า -->
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-gray-400 ml-1">ชื่อผู้ติดต่อ</label>
+                        <input type="text" id="v_fname" class="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="ชื่อ">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-gray-400 ml-1">นามสกุล</label>
+                        <input type="text" id="v_lname" class="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="นามสกุล">
+                    </div>
+                </div>
+                
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-gray-400 ml-1">เบอร์โทรศัพท์</label>
+                    <input type="tel" id="v_phone" class="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none text-lg" placeholder="08XXXXXXXX" maxlength="10">
+                </div>
+            </div>
+
+            <!-- วันที่นัด -->
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-gray-400 ml-1 uppercase tracking-widest">วันที่นัดหมาย</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <select id="v_day" onchange="updateMaxDays()" class="w-full border-none rounded-2xl bg-gray-50 select-custom focus:ring-2 focus:ring-emerald-500"></select>
+                    <select id="v_month" onchange="updateMaxDays()" class="w-full border-none rounded-2xl bg-gray-50 select-custom focus:ring-2 focus:ring-emerald-500"></select>
+                    <select id="v_year" onchange="updateMaxDays()" class="w-full border-none rounded-2xl bg-gray-50 select-custom focus:ring-2 focus:ring-emerald-500"></select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ปุ่มกด -->
+        <div class="p-6 pb-safe bg-white">
+            <div class="flex gap-3">
+                <button onclick="closeViewingSheet()" class="flex-1 py-4 text-gray-500 font-bold">ยกเลิก</button>
+                <button onclick="submitViewing()" class="flex-[2] py-4 rounded-2xl text-white font-bold btn-theme shadow-theme active:scale-95 transition-all">
+                    ยืนยันการนัด
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const monthNames = [
+            { v: '01', n: 'ม.ค.' }, { v: '02', n: 'ก.พ.' }, { v: '03', n: 'มี.ค.' },
+            { v: '04', n: 'เม.ย.' }, { v: '05', n: 'พ.ค.' }, { v: '06', n: 'มิ.ย.' },
+            { v: '07', n: 'ก.ค.' }, { v: '08', n: 'ส.ค.' }, { v: '09', n: 'ก.ย.' },
+            { v: '10', n: 'ต.ค.' }, { v: '11', n: 'พ.ย.' }, { v: '12', n: 'ธ.ค.' }
+        ];
+
+        // --- Logic ---
+        function openSheet(sheetId, maskId) {
+            document.getElementById(maskId).style.display = 'block';
+            setTimeout(() => {
+                document.getElementById(maskId).classList.add('open');
+                document.getElementById(sheetId).classList.add('open');
+            }, 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSheet(sheetId, maskId) {
+            document.getElementById(sheetId).classList.remove('open');
+            document.getElementById(maskId).classList.remove('open');
+            setTimeout(() => {
+                document.getElementById(maskId).style.display = 'none';
+            }, 300);
+            document.body.style.overflow = 'auto';
+        }
+
+        function openRoomActions(room) {
+            document.getElementById('targetRoom').textContent = room;
+            openSheet('actionSheet', 'actionMask');
+        }
+
+        function closeRoomActions() {
+            closeSheet('actionSheet', 'actionMask');
+        }
+
+        function handleAction(type) {
+            const room = document.getElementById('targetRoom').textContent;
+            closeRoomActions();
+            if (type === 'นัดดู') {
+                document.getElementById('viewingRoom').textContent = room;
+                setupDateSelectors();
+                openSheet('viewingSheet', 'viewingMask');
+            }
+        }
+
+        function setupDateSelectors() {
+            const now = new Date();
+            const sDay = document.getElementById('v_day');
+            const sMonth = document.getElementById('v_month');
+            const sYear = document.getElementById('v_year');
+
+            // Month
+            sMonth.innerHTML = '';
+            monthNames.forEach(m => sMonth.add(new Option(m.n, m.v)));
+            sMonth.value = String(now.getMonth() + 1).padStart(2, '0');
+
+            // Year (CE to BE display)
+            sYear.innerHTML = '';
+            for (let i = now.getFullYear(); i <= now.getFullYear() + 1; i++) {
+                sYear.add(new Option(i + 543, i));
+            }
+
+            updateMaxDays();
+            sDay.value = String(now.getDate()).padStart(2, '0');
+        }
+
+        function updateMaxDays() {
+            const sDay = document.getElementById('v_day');
+            const m = parseInt(document.getElementById('v_month').value);
+            const y = parseInt(document.getElementById('v_year').value);
+            const current = sDay.value;
+            const max = new Date(y, m, 0).getDate();
+
+            sDay.innerHTML = '';
+            for (let i = 1; i <= max; i++) {
+                let d = String(i).padStart(2, '0');
+                sDay.add(new Option(d, d));
+            }
+            sDay.value = current <= max ? current : "01";
+        }
+
+        function closeViewingSheet() {
+            closeSheet('viewingSheet', 'viewingMask');
+        }
+
+        function submitViewing() {
+            const fname = document.getElementById('v_fname').value.trim();
+            const phone = document.getElementById('v_phone').value.trim();
+            
+            if (!fname || phone.length < 9) {
+                alert('กรุณากรอกชื่อและเบอร์โทรศัพท์');
+                return;
+            }
+
+            const date = `${document.getElementById('v_day').value}/${document.getElementById('v_month').value}/${document.getElementById('v_year').value}`;
+            
+            alert(`✅ บันทึกนัดหมายแล้ว\nห้อง: ${document.getElementById('viewingRoom').textContent}\nวันที่: ${date}\nคุณ${fname}`);
+            closeViewingSheet();
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>รายงานบริหารหอพัก</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #ffffff; color: #1e293b; overflow-x: hidden; }
+        .header-section { width: 100%; background-color: white; border-bottom: 1px solid #f1f5f9; padding-top: 48px; padding-bottom: 24px; }
+        .content-area { padding-top: 24px; }
+        .bento-card { border-radius: 24px; border: 1.5px solid #f1f5f9; padding: 20px; }
+        .month-pill { font-size: 0.75rem; padding: 0.6rem 0; text-align: center; border-radius: 12px; font-weight: 600; color: #94a3b8; border: 1.5px solid #f1f5f9; }
+        .month-pill.active { background: #1e293b; color: white; border-color: #1e293b; }
+        
+        .stat-badge { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 99px; text-transform: uppercase; }
+
+        .fab-right { position: fixed; bottom: 85px; right: 20px; z-index: 50; }
+        .fab-btn { width: 60px; height: 60px; border-radius: 20px; background: #1e293b; color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: transform 0.2s; }
+        .fab-btn:active { transform: scale(0.9); }
+
+        /* Bottom Sheet Styles */
+        #overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 150; backdrop-filter: blur(4px); }
+        .bottom-sheet { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top-left-radius: 32px; border-top-right-radius: 32px; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 200; padding: 24px; padding-bottom: 40px; box-shadow: 0 -10px 25px rgba(0,0,0,0.1); }
+        .bottom-sheet.show { transform: translateY(0); }
+        .sheet-handle { width: 40px; height: 4px; background: #e2e8f0; border-radius: 2px; margin: 0 auto 20px; }
+    </style>
+</head>
+<body class="pb-32">
+
+    <!-- HEADER -->
+    <header class="header-section px-6">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-2xl font-black text-slate-800 italic uppercase">รายงาน</h1>
+                <p class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">ภาพรวมข้อมูลรายเดือน</p>
+            </div>
+            <select class="bg-transparent border border-slate-200 text-xs font-bold text-slate-600 rounded-xl px-3 py-2 outline-none">
+                <option>ปี 2568</option>
+            </select>
+        </div>
+        <div class="grid grid-cols-6 gap-2">
+            <button class="month-pill active">ม.ค.</button>
+            <button class="month-pill">ก.พ.</button>
+            <button class="month-pill">มี.ค.</button>
+            <button class="month-pill">เม.ย.</button>
+            <button class="month-pill">พ.ค.</button>
+            <button class="month-pill">มิ.ย.</button>
+        </div>
+    </header>
+
+    <main class="content-area px-5 space-y-8">
+        
+        <!-- 1. กำไรสุทธิ -->
+        <section>
+            <div class="flex justify-between items-end mb-4">
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">กำไรสุทธิ</p>
+                    <h2 id="netProfitText" class="text-4xl font-black text-slate-800">฿125,000</h2>
+                </div>
+                <div class="text-right">
+                    <div class="flex flex-col items-end">
+                        <span id="incomeBadge" class="stat-badge bg-green-100 text-green-600 mb-1">รับ: ฿170,000</span>
+                        <span id="expenseBadge" class="stat-badge bg-red-100 text-red-600">จ่าย: ฿45,000</span>
+                    </div>
+                </div>
+            </div>
+            <div class="h-20">
+                <canvas id="profitBarChart"></canvas>
+            </div>
+        </section>
+
+        <!-- 2. ยอดเก็บค่าเช่า -->
+        <section class="bento-card">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest italic">ยอดเก็บค่าเช่าห้อง</h3>
+                <span class="stat-badge bg-blue-100 text-blue-600">สำเร็จ 45/50 ห้อง</span>
+            </div>
+            <div class="flex items-end gap-2 mb-4">
+                <h2 class="text-3xl font-black text-slate-800">฿136,000</h2>
+                <p class="text-xs font-bold text-slate-400 mb-1">/ เป้าหมาย ฿145,000</p>
+            </div>
+            <div class="space-y-2 bg-blue-50/50 p-4 rounded-2xl">
+                <div class="flex justify-between">
+                    <span class="text-xs font-bold text-blue-600">ค่าเช่าที่เก็บได้แล้ว</span>
+                    <span class="text-xs font-black text-blue-700">฿136,000</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-xs font-bold text-slate-400">รอการโอนชำระ</span>
+                    <span class="text-xs font-black text-rose-500">฿9,000</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. รายได้แยกประเภท -->
+        <section class="bento-card">
+            <h3 class="text-xs font-bold text-slate-400 mb-6 uppercase tracking-widest italic">สัดส่วนรายได้ทั้งหมด</h3>
+            <div class="h-44 mb-6">
+                <canvas id="incomeDetailChart"></canvas>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+                <div class="text-center">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase">ค่าห้อง</p>
+                    <p class="text-xs font-black text-blue-600">136k</p>
+                </div>
+                <div class="text-center border-x border-slate-100">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase">ค่าไฟ</p>
+                    <p class="text-xs font-black text-amber-600">20.4k</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase">ค่าน้ำ</p>
+                    <p class="text-xs font-black text-cyan-600">13.6k</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- FAB -->
+    <div class="fab-right">
+        <button onclick="toggleSheet(true)" class="fab-btn">
+            <i class="fa-solid fa-plus text-2xl"></i>
+        </button>
+    </div>
+
+    <!-- BOTTOM SHEET FOR INPUT -->
+    <div id="overlay" onclick="toggleSheet(false)"></div>
+    <div id="bottomSheet" class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <h3 class="text-lg font-black text-slate-800 mb-6 flex items-center gap-2">
+            <i class="fa-solid fa-wallet text-blue-600"></i> เพิ่มรายการใหม่
+        </h3>
+        
+        <div class="space-y-6">
+            <!-- Toggle Type -->
+            <div class="flex bg-slate-100 p-1 rounded-2xl">
+                <button id="btnTypeIn" onclick="setType('income')" class="flex-1 py-3 rounded-xl text-sm font-bold bg-white text-slate-800 shadow-sm transition-all">รายรับ</button>
+                <button id="btnTypeOut" onclick="setType('expense')" class="flex-1 py-3 rounded-xl text-sm font-bold text-slate-400 transition-all">รายจ่าย</button>
+            </div>
+
+            <!-- Amount Input -->
+            <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">ระบุจำนวนเงิน (บาท)</label>
+                <input id="amountInput" type="number" placeholder="0.00" class="w-full text-4xl font-black p-4 mt-2 bg-slate-50 border-none rounded-3xl focus:ring-2 focus:ring-slate-800 outline-none">
+            </div>
+
+            <button onclick="saveTransaction()" class="w-full bg-slate-800 text-white py-5 rounded-2xl font-bold text-lg shadow-lg active:scale-[0.98] transition-transform">
+                บันทึกรายการ
+            </button>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-100 z-[100] h-16 shadow-lg">
+        <div class="grid grid-cols-3 h-full">
+            <a href="#" class="flex flex-col items-center justify-center text-blue-600">
+                <i class="fa-solid fa-chart-pie text-xl"></i>
+                <span class="text-[10px] font-bold">รายงาน</span>
+            </a>
+            <a href="#" class="flex flex-col items-center justify-center text-gray-400">
+                <i class="fa-solid fa-house text-xl"></i>
+                <span class="text-[10px] font-medium">หน้าหลัก</span>
+            </a>
+            <a href="#" class="flex flex-col items-center justify-center text-gray-400">
+                <i class="fa-solid fa-user-circle text-xl"></i>
+                <span class="text-[10px] font-medium">โปรไฟล์</span>
+            </a>
+        </div>
+    </nav>
+
+    <script>
+        // Global State
+        let currentIncome = 170000;
+        let currentExpense = 45000;
+        let selectedType = 'income';
+        let profitChart;
+
+        window.onload = function() {
+            initCharts();
+        };
+
+        function initCharts() {
+            const font = { family: 'Kanit', size: 11, weight: '700' };
+            
+            // Profit Bar Chart
+            const ctx = document.getElementById('profitBarChart').getContext('2d');
+            profitChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['รับ/จ่าย'],
+                    datasets: [
+                        { label: 'รายรับ', data: [currentIncome], backgroundColor: '#1e293b', borderRadius: 10, barThickness: 15 },
+                        { label: 'รายจ่าย', data: [currentExpense], backgroundColor: '#e2e8f0', borderRadius: 10, barThickness: 15 }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { display: false, stacked: false }, y: { display: false } }
+                }
+            });
+
+            // Income Detail Chart (Static for now)
+            new Chart(document.getElementById('incomeDetailChart').getContext('2d'), {
+                type: 'bar',
+                data: { 
+                    labels: ['ค่าห้อง', 'ไฟ', 'น้ำ'], 
+                    datasets: [{ data: [136000, 20400, 13600], backgroundColor: ['#3b82f6', '#f59e0b', '#06b6d4'], borderRadius: 12, barThickness: 25 }] 
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        x: { grid: { display: false }, ticks: { font } }, 
+                        y: { display: false } 
+                    }
+                }
+            });
+        }
+
+        // Logic Functions
+        function toggleSheet(show) {
+            const sheet = document.getElementById('bottomSheet');
+            const overlay = document.getElementById('overlay');
+            if(show) {
+                overlay.style.display = 'block';
+                setTimeout(() => sheet.classList.add('show'), 10);
+            } else {
+                sheet.classList.remove('show');
+                setTimeout(() => overlay.style.display = 'none', 400);
+                document.getElementById('amountInput').value = '';
+            }
+        }
+
+        function setType(type) {
+            selectedType = type;
+            const btnIn = document.getElementById('btnTypeIn');
+            const btnOut = document.getElementById('btnTypeOut');
+            
+            if(type === 'income') {
+                btnIn.className = 'flex-1 py-3 rounded-xl text-sm font-bold bg-white text-slate-800 shadow-sm transition-all';
+                btnOut.className = 'flex-1 py-3 rounded-xl text-sm font-bold text-slate-400 transition-all';
+            } else {
+                btnOut.className = 'flex-1 py-3 rounded-xl text-sm font-bold bg-white text-slate-800 shadow-sm transition-all';
+                btnIn.className = 'flex-1 py-3 rounded-xl text-sm font-bold text-slate-400 transition-all';
+            }
+        }
+
+        function saveTransaction() {
+            const amount = parseFloat(document.getElementById('amountInput').value);
+            if(isNaN(amount) || amount <= 0) {
+                alert('กรุณากรอกจำนวนเงินที่ถูกต้อง');
+                return;
+            }
+
+            if(selectedType === 'income') {
+                currentIncome += amount;
+            } else {
+                currentExpense += amount;
+            }
+
+            updateUI();
+            toggleSheet(false);
+        }
+
+        function updateUI() {
+            // Update Text
+            const netProfit = currentIncome - currentExpense;
+            document.getElementById('netProfitText').innerText = `฿${netProfit.toLocaleString()}`;
+            document.getElementById('incomeBadge').innerText = `รับ: ฿${currentIncome.toLocaleString()}`;
+            document.getElementById('expenseBadge').innerText = `จ่าย: ฿${currentExpense.toLocaleString()}`;
+
+            // Update Chart
+            profitChart.data.datasets[0].data = [currentIncome];
+            profitChart.data.datasets[1].data = [currentExpense];
+            profitChart.update();
+        }
+    </script>
+</body>
+</html>
